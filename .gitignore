@@ -1,0 +1,5 @@
+node_modules/
+.wrangler/
+.local-d1.json
+.DS_Store
+*.log

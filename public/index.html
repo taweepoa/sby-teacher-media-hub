@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#07164a">
+    <meta name="description" content="ศูนย์รวมสื่อการสอนสำหรับครูมืออาชีพ โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน พัฒนาระบบโดย ครูทวีป นวคุณานนท์ เชื่อมต่อฐานข้อมูลนักเรียนออนไลน์และออกรายงานราชการอัตโนมัติ">
+    <title>รวมสื่อการสอนสำหรับครูมืออาชีพ • โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน</title>
+    <link rel="icon" href="assets/img/school-logo.png">
+    <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="assets/vendor/sweetalert2/sweetalert2.min.css">
+    <link rel="stylesheet" href="portal/portal.css">
+    <!-- Google Identity Services (สำหรับ Google Sign-In) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+<!-- ==================== Top Navigation Header ==================== -->
+<header class="sby-navbar">
+    <div class="sby-container sby-nav-inner">
+        <a href="#/apps" class="sby-brand" id="nav-brand-link">
+            <img src="assets/img/school-logo.png" alt="ตราโรงเรียนส่วนบุญโญปถัมภ์ ลำพูน" class="sby-brand-logo">
+            <div class="sby-brand-text">
+                <h1>รวมสื่อการสอนสำหรับครูมืออาชีพ</h1>
+                <p>โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน • พัฒนาระบบโดย ครูทวีป นวคุณานนท์</p>
+            </div>
+        </a>
+
+        <nav class="sby-nav-tabs" id="portal-nav-tabs" aria-label="เมนูหลัก">
+            <button type="button" class="sby-tab-btn active" data-tab="apps" id="tab-btn-apps">
+                <i class="fas fa-grid-2"></i><span>คลังสื่อการสอน (7 ระบบ)</span>
+            </button>
+            <button type="button" class="sby-tab-btn" data-tab="roster" id="tab-btn-roster">
+                <i class="fas fa-users-rectangle"></i><span>ฐานข้อมูลนักเรียน &amp; โรงเรียน</span>
+            </button>
+            <button type="button" class="sby-tab-btn" data-tab="backup" id="tab-btn-backup">
+                <i class="fas fa-cloud-arrow-up"></i><span>ซิงค์ &amp; สำรองข้อมูลรวม</span>
+            </button>
+            <button type="button" class="sby-tab-btn" data-tab="admin" id="tab-btn-admin">
+                <i class="fas fa-user-shield"></i><span>จัดการสิทธิ์ครู (Admin)</span>
+            </button>
+        </nav>
+
+        <div class="sby-user-box" id="nav-user-box"></div>
+    </div>
+</header>
+
+<!-- ==================== Hero Section ==================== -->
+<section class="sby-hero">
+    <div class="sby-container sby-hero-grid">
+        <div>
+            <div class="sby-school-badge">
+                <i class="fas fa-shield-halved"></i>
+                <span>SBY Smart Classroom Cloud • ระบบเครือข่ายสื่อการสอนออนไลน์ (@sby.ac.th)</span>
+            </div>
+            <h2 class="sby-hero-title">รวมสื่อการสอนสำหรับครูมืออาชีพ<br>โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน</h2>
+            <p class="sby-hero-sub">
+                แพลตฟอร์มสื่อการสอนและเกมการศึกษาเชิงรุก (Active Learning) ทั้ง 7 ระบบ เชื่อมต่อฐานข้อมูลรายชื่อนักเรียนและข้อมูลโรงเรียนชุดเดียวกัน บันทึกข้อมูลขึ้นคลาวด์อัตโนมัติ และส่งออกรายงานราชการ (.docx) ได้ทันที
+            </p>
+            <div class="sby-creator-card">
+                <div class="sby-creator-icon"><i class="fas fa-laptop-code"></i></div>
+                <div class="sby-creator-info">
+                    <b>พัฒนาระบบโดย ครูทวีป นวคุณานนท์</b>
+                    <span>โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน • สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาลำพูน ลำปาง</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sby-hero-visual">
+            <img src="assets/img/hero-classroom.svg" alt="ระบบสื่อการสอนอัจฉริยะ โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน" style="width:100%;height:auto;display:block;border-radius:12px;">
+            <div class="sby-stats-grid">
+                <div class="sby-stat-box">
+                    <i class="fas fa-cubes"></i>
+                    <div>
+                        <b id="stat-total-apps">7 ระบบ</b>
+                        <small>สื่อการสอนพร้อมใช้งาน</small>
+                    </div>
+                </div>
+                <div class="sby-stat-box">
+                    <i class="fas fa-user-graduate"></i>
+                    <div>
+                        <b id="stat-total-students">0 คน</b>
+                        <small id="stat-total-classes">ในฐานข้อมูลกลาง 0 ห้อง</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== Main Content Container ==================== -->
+<main class="sby-section">
+    <div class="sby-container" id="portal-main-view"></div>
+</main>
+
+<!-- ==================== Footer ==================== -->
+<footer class="sby-footer">
+    <div class="sby-container sby-footer-inner">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <img src="assets/img/school-logo.png" alt="สบ." style="width:40px;height:40px;object-fit:contain;background:#fff;border-radius:50%;padding:3px;">
+            <div>
+                <b style="color:#fff;display:block;">รวมสื่อการสอนสำหรับครูมืออาชีพ โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน</b>
+                <span>พัฒนาระบบโดย ครูทวีป นวคุณานนท์ • รองรับการใช้งานทั้งออนไลน์บน Cloudflare และออฟไลน์ในชั้นเรียน</span>
+            </div>
+        </div>
+        <div>
+            <span class="sby-badge sby-badge-blue"><i class="fas fa-lock"></i> เฉพาะคุณครู @sby.ac.th และบัญชีที่ได้รับอนุมัติ</span>
+        </div>
+    </div>
+</footer>
+
+<script src="assets/vendor/sweetalert2/sweetalert2.min.js"></script>
+<script src="assets/vendor/xlsx/xlsx.bundle.js"></script>
+<script src="portal/portal.js"></script>
+</body>
+</html>

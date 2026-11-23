@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0d9488">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>นาฬิกาจับเวลาหน้าชั้นเรียน • System ห้องสื่อครูคอม</title>
+    <!-- ทุกไฟล์อยู่ในโฟลเดอร์ assets ใช้งานออฟไลน์ได้ ไม่โหลดจากอินเทอร์เน็ต -->
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/assets/vendor/sweetalert2/sweetalert2.min.css">
+    <link rel="stylesheet" href="assets/css/vs-fonts.css">
+    <link rel="stylesheet" href="assets/css/vs-app.css">
+    <link rel="stylesheet" href="assets/css/vs-themes.css">
+    <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body class="vs-theme-mint">
+<div class="app-shell" id="app-shell">
+    <aside class="app-sidebar" aria-label="เมนูหลัก">
+        <div class="sb-brand">
+            <span class="sb-brand-icon"><i class="fas fa-stopwatch"></i></span>
+            <div><b>นาฬิกาจับเวลา</b><small>หน้าชั้นเรียน • ออฟไลน์</small></div>
+            <button type="button" class="sb-close" data-sb-close aria-label="ปิดเมนู"><i class="fas fa-xmark"></i></button>
+        </div>
+        <nav class="sb-menu" id="sb-menu"></nav>
+        <div class="sb-foot"><div class="sb-backup" id="sb-backup"></div></div>
+    </aside>
+    <div class="sb-backdrop" data-sb-close></div>
+
+    <div class="app-main">
+        <header class="app-topbar">
+            <button type="button" class="tb-burger" data-sb-open aria-label="เปิดเมนู"><i class="fas fa-bars"></i></button>
+            <div class="tb-title" id="tb-title"><i class="fas fa-stopwatch"></i><span>นาฬิกาจับเวลา</span></div>
+            <div class="tb-right">
+                <button type="button" class="tb-pill is-warn" id="tb-audio" hidden title="เบราว์เซอร์ต้องการให้แตะหน้าจอก่อนจึงจะเล่นเสียงได้"><i class="fas fa-volume-xmark"></i><span class="tb-hide-sm">แตะเพื่อเปิดเสียงเตือน</span></button>
+                <button type="button" class="tb-pill mic" id="tb-mic" hidden title="ไมโครโฟนกำลังทำงาน (ไฟจราจรเสียง)"><i class="fas fa-microphone"></i><span class="tb-hide-sm">ไมค์ทำงาน</span><b class="mic-dot"></b></button>
+                <span class="tb-saved tb-hide-sm" id="tb-saved"></span>
+                <button type="button" class="btn-x ghost sm tb-hide-sm" id="tb-keys" title="คีย์ลัด"><i class="fas fa-keyboard"></i></button>
+                <button type="button" class="btn-x green sm" id="tb-backup-btn" title="บันทึกการตั้งค่า ชุดเวลา และตารางคาบเป็นไฟล์ .json เพื่อสำรอง/ย้ายเครื่อง"><i class="fas fa-download"></i><span class="tb-hide-sm">บันทึกไฟล์ข้อมูล (.json)</span></button>
+            </div>
+        </header>
+        <main class="app-content" id="view"></main>
+    </div>
+</div>
+
+<noscript>
+    <div style="padding:40px;font-family:sans-serif">กรุณาเปิดใช้ JavaScript และเปิดไฟล์นี้ด้วย Google Chrome หรือ Microsoft Edge</div>
+</noscript>
+
+<!-- ไลบรารี (เก็บไว้ในโฟลเดอร์ assets ใช้งานได้โดยไม่ต้องต่ออินเทอร์เน็ต) -->
+<script src="/assets/vendor/sweetalert2/sweetalert2.min.js"></script>
+<!-- โหมดทดลองใช้ (ทำงานเฉพาะเมื่อ vipsys เปิดเป็นระบบทดลอง หรือ ?vsdemo=1 — ฉบับที่ซื้อไม่มีผล) -->
+<script src="assets/js/vs-demo.js"></script>
+<script src="assets/js/vs-utils.js"></script>
+<script src="assets/js/vs-shell.js"></script>
+
+<!-- โปรแกรม -->
+<script src="js/timer-core.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/store.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/timer.js"></script>
+<script src="js/noise.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/stage.js"></script>
+<script src="js/views/timer.js"></script>
+<script src="js/views/sequences.js"></script>
+<script src="js/views/schedule.js"></script>
+<script src="js/views/noise.js"></script>
+<script src="js/views/settings.js"></script>
+<script src="js/views/backup.js"></script>
+<script src="js/app.js"></script>
+    <script src="/portal/vs-cloud-sync.js"></script>
+</body>
+</html>
