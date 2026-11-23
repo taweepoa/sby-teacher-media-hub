@@ -1,3 +1,4 @@
+import { ensureD1Schema } from "./_db.js";
 /* =====================================================================
    POST /api/auth — ยืนยันตัวตนด้วย Google Sign-In & ตรวจสอบสิทธิ์ครูโรงเรียนส่วนบุญโญปถัมภ์ ลำพูน
    GET  /api/auth — ตรวจสอบสถานะ Session ปัจจุบัน
@@ -49,7 +50,7 @@ export async function onRequestGet(context) {
         return jsonResponse({ authenticated: false, googleClientId: env.GOOGLE_CLIENT_ID || '' }, 200);
     }
 
-    if (env.DB) {
+    if (env.DB) { await ensureD1Schema(env.DB);
         const row = await env.DB.prepare('SELECT * FROM teachers WHERE email = ?').bind(user.email).first();
         if (!row || !row.is_active) {
             return jsonResponse({ authenticated: false, reason: 'บัญชีถูกระงับหรือไม่มีในระบบ' }, 403);
@@ -119,7 +120,7 @@ export async function onRequestPost(context) {
 
     // 2. ตรวจสอบกับตารางรายชื่อครูที่อนุมัติใน Cloudflare D1
     let teacherRow = null;
-    if (env.DB) {
+    if (env.DB) { await ensureD1Schema(env.DB);
         teacherRow = await env.DB.prepare('SELECT * FROM teachers WHERE email = ?').bind(email).first();
 
         if (!teacherRow) {

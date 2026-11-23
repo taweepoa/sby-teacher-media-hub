@@ -1,3 +1,4 @@
+import { ensureD1Schema } from "./_db.js";
 /* =====================================================================
    GET    /api/admin — ดึงรายชื่อครูผู้มีสิทธิ์ใช้งานทั้งหมด (เฉพาะ Admin)
    POST   /api/admin — เพิ่ม/แก้ไขสิทธิ์ครู (รองรับทั้ง @sby.ac.th และ @gmail.com รายบุคคล)
@@ -12,7 +13,7 @@ async function checkAdmin(context) {
     if (user.email === (env.ADMIN_EMAIL || DEFAULT_ADMIN) || user.role === 'admin') {
         return { ok: true, user };
     }
-    if (env.DB) {
+    if (env.DB) { await ensureD1Schema(env.DB);
         const row = await env.DB.prepare('SELECT role FROM teachers WHERE email = ?').bind(user.email).first();
         if (row && row.role === 'admin') return { ok: true, user };
     }
@@ -63,6 +64,7 @@ export async function onRequestPost(context) {
     const isActive = body.isActive === false || body.isActive === 0 ? 0 : 1;
     const allowExternal = !rule.isSchoolDomain ? 1 : 0;
 
+    if (env.DB) await ensureD1Schema(env.DB);
     if (!env.DB) {
         return jsonResponse({ ok: true, teacher: { email, name, position, department, role, is_active: isActive } });
     }
@@ -108,7 +110,7 @@ export async function onRequestDelete(context) {
         return jsonResponse({ ok: false, error: 'ไม่สามารถลบบัญชีผู้ดูแลระบบหลักได้' }, 400);
     }
 
-    if (env.DB) {
+    if (env.DB) { await ensureD1Schema(env.DB);
         await env.DB.prepare('DELETE FROM teachers WHERE email = ?').bind(email).run();
     }
     return jsonResponse({ ok: true, deleted: email });

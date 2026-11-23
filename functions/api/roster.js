@@ -1,3 +1,4 @@
+import { ensureD1Schema } from "./_db.js";
 /* =====================================================================
    GET /api/roster — ดึงข้อมูลโรงเรียน + ห้องเรียนและรายชื่อนักเรียนส่วนกลาง (Master Roster)
    PUT /api/roster — บันทึกข้อมูลโรงเรียนและรายชื่อนักเรียนส่วนกลาง พร้อมซิงค์ไปยังทุกสื่อ
@@ -9,6 +10,7 @@ export async function onRequestGet(context) {
     const user = await requireAuth(context);
     if (!user) return jsonResponse({ ok: false, error: 'กรุณาเข้าสู่ระบบ' }, 401);
 
+    if (env.DB) await ensureD1Schema(env.DB);
     if (!env.DB) {
         return jsonResponse({ ok: true, schoolProfile: user.schoolProfile || {}, classes: [] });
     }
@@ -48,6 +50,7 @@ export async function onRequestPut(context) {
         return jsonResponse({ ok: false, error: 'ข้อมูล JSON ไม่ถูกต้อง' }, 400);
     }
 
+    if (env.DB) await ensureD1Schema(env.DB);
     if (!env.DB) {
         return jsonResponse({ ok: true, savedAt: new Date().toISOString() });
     }

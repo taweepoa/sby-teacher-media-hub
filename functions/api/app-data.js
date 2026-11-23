@@ -1,3 +1,4 @@
+import { ensureD1Schema } from "./_db.js";
 /* =====================================================================
    GET /api/app-data?appId=... — ดึงข้อมูลของสื่อการสอน (หรือดึงทั้งหมด 7 ระบบเมื่อไม่ระบุ appId)
    PUT /api/app-data           — บันทึกข้อมูลของสื่อการสอนลง Cloudflare D1 พร้อมซิงค์รายชื่อนักเรียนกลางอัตโนมัติ
@@ -22,6 +23,7 @@ export async function onRequestGet(context) {
     const url = new URL(request.url);
     const appId = url.searchParams.get('appId');
 
+    if (env.DB) await ensureD1Schema(env.DB);
     if (!env.DB) {
         return jsonResponse({ ok: true, appId, data: null, states: {} });
     }
@@ -72,6 +74,7 @@ export async function onRequestPut(context) {
     }
 
     const now = new Date().toISOString();
+    if (env.DB) await ensureD1Schema(env.DB);
     if (!env.DB) {
         return jsonResponse({ ok: true, appId, savedAt: now });
     }
