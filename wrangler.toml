@@ -1,18 +1,15 @@
 name = "sby-teacher-media-hub"
-pages_build_output_dir = "public"
+main = "worker.js"
 compatibility_date = "2024-11-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
 
 [vars]
 SCHOOL_NAME = "โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน"
 SCHOOL_DOMAIN = "sby.ac.th"
 STUDENT_EMAIL_REGEX = "^sby_\\d{5}@sby\\.ac\\.th$"
 ADMIN_EMAIL = "taweep@sby.ac.th"
-# ใส่ Google OAuth Client ID ที่ได้จาก Google Cloud Console
 GOOGLE_CLIENT_ID = ""
-# โหมดบังคับเฉพาะรายชื่อครูในตาราง approved_teachers ("strict" หรือ "domain_teachers")
 AUTH_POLICY = "domain_teachers"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "sby_media_hub_db"
-database_id = "00000000-0000-0000-0000-000000000000"
