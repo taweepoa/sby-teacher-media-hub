@@ -306,43 +306,75 @@
 
         const style = document.createElement('style');
         style.textContent = `
+            :root {
+                --sby-ribbon-h: 42px;
+            }
+            body.sby-has-ribbon {
+                padding-top: var(--sby-ribbon-h);
+            }
+            body.sby-has-ribbon .app-shell {
+                min-height: calc(100vh - var(--sby-ribbon-h));
+            }
+            body.sby-has-ribbon .app-sidebar {
+                top: var(--sby-ribbon-h) !important;
+                height: calc(100vh - var(--sby-ribbon-h));
+            }
+            body.sby-has-ribbon .app-topbar {
+                top: var(--sby-ribbon-h) !important;
+            }
+            body.sby-has-ribbon .sb-backdrop {
+                top: var(--sby-ribbon-h) !important;
+            }
             #sby-portal-ribbon {
                 background: linear-gradient(90deg, #001a66 0%, #002899 60%, #1e3a8a 100%);
                 color: #ffffff;
                 font-family: 'Sarabun', sans-serif;
                 font-size: 13px;
-                height: 38px;
+                height: var(--sby-ribbon-h);
                 padding: 0 14px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 gap: 10px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-                position: relative;
-                z-index: 1040;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 1050;
                 user-select: none;
             }
-            #sby-portal-ribbon .sby-rb-left,
+            #sby-portal-ribbon .sby-rb-left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 0;
+                flex: 1 1 auto;
+            }
             #sby-portal-ribbon .sby-rb-right {
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                flex-shrink: 0;
             }
             #sby-portal-ribbon .sby-home-btn {
                 display: inline-flex;
                 align-items: center;
                 gap: 7px;
-                background: rgba(255,255,255,0.14);
+                background: rgba(255,255,255,0.16);
                 color: #ffffff;
                 text-decoration: none;
                 padding: 4px 11px;
-                border-radius: 6px;
-                font-weight: 600;
+                border-radius: 7px;
+                font-weight: 700;
+                white-space: nowrap;
+                flex-shrink: 0;
                 transition: background 0.18s ease, transform 0.15s ease;
-                border: 1px solid rgba(255,255,255,0.2);
+                border: 1px solid rgba(255,255,255,0.26);
             }
             #sby-portal-ribbon .sby-home-btn:hover {
-                background: rgba(255,255,255,0.26);
+                background: rgba(255,255,255,0.28);
+                color: #ffffff;
                 transform: translateY(-1px);
             }
             #sby-portal-ribbon .sby-home-btn img {
@@ -359,22 +391,27 @@
                 gap: 4px;
                 overflow-x: auto;
                 scrollbar-width: none;
+                min-width: 0;
+            }
+            #sby-portal-ribbon .sby-app-switcher::-webkit-scrollbar {
+                display: none;
             }
             #sby-portal-ribbon .sby-app-pill {
                 display: inline-flex;
                 align-items: center;
                 gap: 5px;
-                color: rgba(255,255,255,0.82);
+                color: rgba(255,255,255,0.85);
                 text-decoration: none;
-                padding: 3px 9px;
-                border-radius: 5px;
+                padding: 4px 9px;
+                border-radius: 6px;
                 font-size: 12.5px;
                 font-weight: 500;
                 white-space: nowrap;
+                flex-shrink: 0;
                 transition: all 0.15s ease;
             }
             #sby-portal-ribbon .sby-app-pill:hover {
-                background: rgba(255,255,255,0.15);
+                background: rgba(255,255,255,0.16);
                 color: #fff;
             }
             #sby-portal-ribbon .sby-app-pill.active {
@@ -405,26 +442,87 @@
                 font-size: 12px;
                 font-weight: 600;
                 cursor: pointer;
+                white-space: nowrap;
+                text-decoration: none;
                 transition: all 0.15s ease;
             }
             #sby-portal-ribbon .sby-roster-btn:hover {
                 background: rgba(250,204,21,0.3);
+                color: #fef08a;
             }
             #sby-portal-ribbon .sby-teacher-tag {
-                color: rgba(255,255,255,0.9);
+                color: rgba(255,255,255,0.92);
                 font-size: 12px;
                 display: inline-flex;
                 align-items: center;
                 gap: 5px;
+                white-space: nowrap;
+            }
+            /* ปุ่มกลับหน้าหลักภายในแถบเมนูด้านซ้าย (.app-sidebar) */
+            #sby-sb-home-wrap {
+                padding: 10px 12px 6px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+                flex: 0 0 auto;
+            }
+            #sby-sb-home-wrap .sby-sb-home-link {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 9px 12px;
+                border-radius: 11px;
+                background: rgba(255, 255, 255, 0.16);
+                border: 1px solid rgba(255, 255, 255, 0.28);
+                color: #ffffff;
+                text-decoration: none;
+                font-weight: 700;
+                font-size: 0.9rem;
+                transition: background 0.18s ease, transform 0.15s ease;
+            }
+            #sby-sb-home-wrap .sby-sb-home-link:hover {
+                background: rgba(255, 255, 255, 0.28);
+                color: #ffffff;
+                transform: translateX(2px);
+            }
+            #sby-sb-home-wrap .sby-sb-home-link i {
+                width: 20px;
+                text-align: center;
+            }
+            @media (max-width: 1120px) {
+                #sby-portal-ribbon .sby-teacher-tag { display: none; }
             }
             @media (max-width: 920px) {
                 #sby-portal-ribbon .sby-app-switcher { display: none; }
             }
+            /* ซ่อนแถบ Portal อัตโนมัติในโหมดฉายเต็มจอและขณะพิมพ์ */
+            body.stage-on #sby-portal-ribbon,
+            body.game-fs #sby-portal-ribbon,
+            body.stage-full #sby-portal-ribbon,
+            :fullscreen #sby-portal-ribbon {
+                display: none !important;
+            }
+            :fullscreen body.sby-has-ribbon,
+            body.stage-on,
+            body.game-fs,
+            body.stage-full {
+                padding-top: 0 !important;
+            }
+            :fullscreen body.sby-has-ribbon .app-sidebar,
+            :fullscreen body.sby-has-ribbon .app-topbar,
+            :fullscreen body.sby-has-ribbon .sb-backdrop {
+                top: 0 !important;
+            }
+            :fullscreen body.sby-has-ribbon .app-sidebar {
+                height: 100vh !important;
+            }
             @media print {
-                #sby-portal-ribbon { display: none !important; }
+                body.sby-has-ribbon { padding-top: 0 !important; }
+                #sby-portal-ribbon, #sby-sb-home-wrap { display: none !important; }
             }
         `;
         document.head.appendChild(style);
+        if (document.body && document.body.classList) {
+            document.body.classList.add('sby-has-ribbon');
+        }
 
         const { user } = getAuth();
         const bar = document.createElement('div');
@@ -433,7 +531,8 @@
             <div class="sby-rb-left">
                 <a href="/index.html" class="sby-home-btn" title="กลับหน้าเว็บไซต์หลัก ศูนย์รวมสื่อการสอน โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน">
                     <img src="/assets/img/school-logo.png" alt="สบ.">
-                    <span>ศูนย์สื่อการสอน สบ.</span>
+                    <i class="fas fa-house"></i>
+                    <span>หน้าหลักศูนย์สื่อฯ สบ.</span>
                 </a>
                 <nav class="sby-app-switcher" aria-label="สลับสื่อการสอน">
                     ${APPS_META.map((a) => `
@@ -455,6 +554,22 @@
         `;
         document.body.insertBefore(bar, document.body.firstChild);
         statusBadgeEl = document.getElementById('sby-sync-badge');
+
+        // แทรกเมนูลิงก์ "กลับหน้าหลักศูนย์สื่อการสอน สบ." ไว้ด้านบนของแถบเมนูด้านซ้าย (.app-sidebar)
+        const sidebar = document.querySelector && document.querySelector('.app-sidebar');
+        if (sidebar && !document.getElementById('sby-sb-home-wrap')) {
+            const sbHome = document.createElement('div');
+            sbHome.id = 'sby-sb-home-wrap';
+            sbHome.innerHTML = `
+                <a href="/index.html" class="sby-sb-home-link" title="กลับหน้าหลัก ศูนย์รวมสื่อการสอน โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>กลับหน้าหลักศูนย์สื่อฯ สบ.</span>
+                </a>
+            `;
+            const sbMenu = sidebar.querySelector('.sb-menu');
+            if (sbMenu) sidebar.insertBefore(sbHome, sbMenu);
+            else sidebar.appendChild(sbHome);
+        }
 
         const pullBtn = document.getElementById('sby-pull-roster-btn');
         if (pullBtn) {

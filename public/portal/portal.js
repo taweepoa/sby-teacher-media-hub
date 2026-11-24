@@ -833,8 +833,11 @@
                         <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" id="btn-add-class">
                             <i class="fas fa-plus"></i><span>เพิ่มห้องเรียนใหม่</span>
                         </button>
-                        <label class="sby-btn sby-btn-outline sby-btn-sm" style="margin:0;cursor:pointer;">
-                            <i class="fas fa-file-excel" style="color:#16a34a;"></i><span>นำเข้าไฟล์ Excel (.xlsx/.csv)</span>
+                        <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" id="btn-export-excel-roster" title="ดาวน์โหลดไฟล์ Excel รายชื่อนักเรียนห้องนี้เพื่อนำไปแก้ไขแล้วนำเข้ากลับมาอัปเดตตามเลขประจำตัวนักเรียน">
+                            <i class="fas fa-file-arrow-down" style="color:#0284c7;"></i><span>ส่งออก Excel (แก้ไข/อัปเดต)</span>
+                        </button>
+                        <label class="sby-btn sby-btn-outline sby-btn-sm" style="margin:0;cursor:pointer;" title="นำเข้าไฟล์ Excel/CSV เพื่อเพิ่มหรืออัปเดตข้อมูลตามเลขประจำตัวนักเรียน">
+                            <i class="fas fa-file-excel" style="color:#16a34a;"></i><span>นำเข้า/อัปเดต Excel (.xlsx/.csv)</span>
                             <input type="file" id="excel-roster-input" accept=".xlsx,.xls,.csv" style="display:none;">
                         </label>
                         <button type="button" class="sby-btn sby-btn-crimson sby-btn-sm" id="btn-paste-students">
@@ -858,6 +861,9 @@
                         <div>
                             <b style="font-size:16px;color:#07164a;">ห้อง ${esc(activeClass.name)}</b>
                             <span style="color:#64748b;font-size:13.5px;margin-left:10px;">จำนวนนักเรียน ${(activeClass.students || []).length} คน</span>
+                            <div style="color:#64748b;font-size:12px;margin-top:2px;">
+                                <i class="fas fa-circle-info" style="color:#0284c7;"></i> สามารถส่งออกไฟล์ Excel ไปแก้ไขแล้วนำเข้ากลับได้ — ระบบจะยึด<b>เลขประจำตัวนักเรียน</b>เป็นหลักในการอัปเดตข้อมูลเดิมโดยไม่ทำให้แต้มหรือประวัติหาย
+                            </div>
                         </div>
                         <div style="display:flex;gap:8px;">
                             <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" id="btn-add-student-row">
@@ -880,7 +886,7 @@
                                     <th>นามสกุล</th>
                                     <th style="width:120px;">ชื่อเล่น</th>
                                     <th style="width:90px;">เพศ</th>
-                                    <th style="width:80px;">จัดการ</th>
+                                    <th style="width:116px;">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -896,9 +902,14 @@
                                             ${s.gender === 'm' ? '<span class="sby-badge sby-badge-blue">ชาย</span>' : s.gender === 'f' ? '<span class="sby-badge sby-badge-red">หญิง</span>' : '-'}
                                         </td>
                                         <td>
-                                            <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" data-del-student="${idx}" title="ลบรายชื่อนี้">
-                                                <i class="fas fa-xmark" style="color:#be123c;"></i>
-                                            </button>
+                                            <div style="display:inline-flex;gap:6px;">
+                                                <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" data-edit-student="${idx}" title="แก้ไขข้อมูลนักเรียน">
+                                                    <i class="fas fa-pen" style="color:#0284c7;"></i>
+                                                </button>
+                                                <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" data-del-student="${idx}" title="ลบรายชื่อนี้">
+                                                    <i class="fas fa-trash" style="color:#be123c;"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -965,29 +976,54 @@
             });
         };
 
-        // Event: Paste students from Excel
+        // Event: Export active class roster to Excel for editing & re-import
+        const exportExcelBtn = document.getElementById('btn-export-excel-roster');
+        if (exportExcelBtn) {
+            exportExcelBtn.onclick = () => {
+                if (!activeClass) {
+                    Swal.fire({ icon: 'warning', title: 'กรุณาสร้างหรือเลือกห้องเรียนก่อน' });
+                    return;
+                }
+                if (!window.XLSX) {
+                    Swal.fire({ icon: 'error', title: 'ไม่พบไลบรารี Excel (XLSX)' });
+                    return;
+                }
+                exportClassToExcel(activeClass);
+            };
+        }
+
+        // Event: Paste students from Excel (supports upsert by code)
         document.getElementById('btn-paste-students').onclick = () => {
             if (!activeClass) return;
             Swal.fire({
                 title: `วางรายชื่อนักเรียนห้อง ${activeClass.name}`,
                 html: `
-                    <p style="font-size:13px;color:#475569;text-align:left;">
-                        คัดลอกตารางจาก Excel หรือพิมพ์รายชื่อบรรทัดละ 1 คน (เช่น <code>1  26201  ด.ช.ธนกฤต  สุขสวัสดิ์  ต้นกล้า</code> หรือ <code>ด.ญ.ณัฐธิดา ทองดี</code>)
+                    <p style="font-size:13px;color:#475569;text-align:left;margin-bottom:8px;">
+                        คัดลอกตารางจาก Excel หรือพิมพ์รายชื่อบรรทัดละ 1 คน (เช่น <code>1  26201  ด.ช.  ธนกฤต  สุขสวัสดิ์  ต้นกล้า</code> หรือ <code>ด.ญ.ณัฐธิดา ทองดี</code>)<br>
+                        <small style="color:#0284c7;">* หากเลขประจำตัวนักเรียนตรงกับที่มีอยู่แล้ว ระบบจะอัปเดตข้อมูลนักเรียนคนนั้นให้อัตโนมัติ</small>
                     </p>
                     <textarea id="paste-lines-area" rows="8" style="width:100%;font-family:inherit;font-size:13.5px;padding:10px;border:1px solid #cbd5e1;border-radius:10px;" placeholder="1\t26201\tด.ช.\tธนกฤต\tสุขสวัสดิ์\tต้นกล้า"></textarea>
                 `,
                 showCancelButton: true,
-                confirmButtonText: 'นำเข้ารายชื่อ',
+                confirmButtonText: 'นำเข้า / อัปเดตรายชื่อ',
                 confirmButtonColor: '#0d257c',
                 preConfirm: () => document.getElementById('paste-lines-area').value,
             }).then(async (res) => {
                 if (res.isConfirmed && res.value) {
-                    const parsed = parseStudentLines(res.value, activeClass.students.length);
-                    if (parsed.length) {
-                        activeClass.students.push(...parsed);
+                    const parsed = parseStudentText(res.value, activeClass.students.length);
+                    if (parsed.rows.length) {
+                        const summary = upsertStudentsByCode(activeClass, parsed.rows, parsed.fields);
                         await pushCloudRoster();
                         renderRosterTab(container);
-                        Swal.fire({ icon: 'success', title: `นำเข้าสำเร็จ ${parsed.length} คน`, timer: 1600, showConfirmButton: false });
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'นำเข้าและอัปเดตรายชื่อสำเร็จ',
+                            text: `อัปเดตข้อมูลเดิม ${summary.updated} คน • เพิ่มนักเรียนใหม่ ${summary.added} คน`,
+                            timer: 2200,
+                            showConfirmButton: false,
+                        });
+                    } else {
+                        Swal.fire({ icon: 'warning', title: 'ไม่พบรายชื่อที่อ่านได้', text: 'กรุณาตรวจสอบรูปแบบข้อมูลที่วาง' });
                     }
                 }
             });
@@ -996,55 +1032,36 @@
         // Event: Add single student
         const addStudentBtn = document.getElementById('btn-add-student-row');
         if (addStudentBtn && activeClass) {
-            addStudentBtn.onclick = () => {
-                const nextNo = (activeClass.students?.length || 0) + 1;
-                Swal.fire({
-                    title: `เพิ่มนักเรียนห้อง ${activeClass.name}`,
-                    html: `
-                        <div style="text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13.5px;">
-                            <div><label>เลขที่</label><input id="st-no" type="number" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;" value="${nextNo}"></div>
-                            <div><label>รหัสนักเรียน (5 หลัก)</label><input id="st-code" type="text" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;" placeholder="เช่น 26207"></div>
-                            <div><label>คำนำหน้า</label><select id="st-prefix" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;"><option value="ด.ช.">ด.ช.</option><option value="ด.ญ.">ด.ญ.</option><option value="นาย">นาย</option><option value="นางสาว">นางสาว</option></select></div>
-                            <div><label>ชื่อเล่น</label><input id="st-nick" type="text" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;"></div>
-                            <div><label>ชื่อจริง</label><input id="st-first" type="text" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;"></div>
-                            <div><label>นามสกุล</label><input id="st-last" type="text" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;"></div>
-                        </div>
-                    `,
-                    showCancelButton: true,
-                    confirmButtonText: 'เพิ่มนักเรียน',
-                    confirmButtonColor: '#0d257c',
-                    preConfirm: () => {
-                        const prefix = document.getElementById('st-prefix').value;
-                        const firstName = document.getElementById('st-first').value.trim();
-                        if (!firstName) {
-                            Swal.showValidationMessage('กรุณากรอกชื่อนักเรียน');
-                            return false;
-                        }
-                        return {
-                            id: 's_' + Date.now(),
-                            no: Number(document.getElementById('st-no').value) || nextNo,
-                            code: document.getElementById('st-code').value.trim(),
-                            prefix,
-                            firstName,
-                            lastName: document.getElementById('st-last').value.trim(),
-                            nick: document.getElementById('st-nick').value.trim(),
-                            gender: ['ด.ช.', 'นาย'].includes(prefix) ? 'm' : 'f',
-                        };
-                    },
-                }).then(async (res) => {
-                    if (res.isConfirmed && res.value) {
-                        activeClass.students.push(res.value);
-                        await pushCloudRoster();
-                        renderRosterTab(container);
-                    }
-                });
-            };
+            addStudentBtn.onclick = () => openStudentModal(activeClass, null, container);
         }
+
+        // Event: Edit single student
+        container.querySelectorAll('[data-edit-student]').forEach((btn) => {
+            btn.onclick = () => {
+                const idx = Number(btn.getAttribute('data-edit-student'));
+                if (activeClass && activeClass.students[idx]) {
+                    openStudentModal(activeClass, idx, container);
+                }
+            };
+        });
 
         // Event: Delete single student
         container.querySelectorAll('[data-del-student]').forEach((btn) => {
             btn.onclick = async () => {
                 const idx = Number(btn.getAttribute('data-del-student'));
+                const stu = activeClass && activeClass.students[idx];
+                if (!stu) return;
+                const fullName = `${stu.prefix || ''}${stu.firstName || ''}${stu.lastName ? ' ' + stu.lastName : ''}`.trim();
+                const confirmRes = await Swal.fire({
+                    icon: 'warning',
+                    title: `ลบรายชื่อ ${fullName || 'นักเรียน'}?`,
+                    text: stu.code ? `รหัสนักเรียน ${stu.code} จะถูกลบออกจากห้อง ${activeClass.name}` : `จะถูกลบออกจากห้อง ${activeClass.name}`,
+                    showCancelButton: true,
+                    confirmButtonText: 'ลบรายชื่อ',
+                    cancelButtonText: 'ยกเลิก',
+                    confirmButtonColor: '#be123c',
+                });
+                if (!confirmRes.isConfirmed) return;
                 activeClass.students.splice(idx, 1);
                 await pushCloudRoster();
                 renderRosterTab(container);
@@ -1059,6 +1076,16 @@
                     Swal.fire({ icon: 'warning', title: 'ต้องมีอย่างน้อย 1 ห้องเรียน' });
                     return;
                 }
+                const confirmRes = await Swal.fire({
+                    icon: 'warning',
+                    title: `ลบห้องเรียน ${activeClass.name}?`,
+                    text: `รายชื่อนักเรียน ${(activeClass.students || []).length} คนในห้องนี้จะถูกลบออกจากระบบกลางและทุกสื่อการสอน`,
+                    showCancelButton: true,
+                    confirmButtonText: 'ลบห้องนี้',
+                    cancelButtonText: 'ยกเลิก',
+                    confirmButtonColor: '#be123c',
+                });
+                if (!confirmRes.isConfirmed) return;
                 state.roster.classes = state.roster.classes.filter((c) => c.id !== activeClass.id);
                 state.activeClassId = state.roster.classes[0]?.id || '';
                 await pushCloudRoster();
@@ -1066,24 +1093,49 @@
             };
         }
 
-        // Event: Excel upload
+        // Event: Excel upload (upsert by student code)
         const excelInput = document.getElementById('excel-roster-input');
         if (excelInput) {
             excelInput.onchange = (e) => {
                 const file = e.target.files[0];
-                if (!file || !window.XLSX) return;
+                if (!file || !window.XLSX || !activeClass) return;
                 const reader = new FileReader();
                 reader.onload = async (evt) => {
-                    const wb = XLSX.read(evt.target.result, { type: 'array' });
-                    const firstSheet = wb.Sheets[wb.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                    const lines = rows.map((r) => (r || []).join('\t')).join('\n');
-                    const parsed = parseStudentLines(lines, activeClass ? activeClass.students.length : 0);
-                    if (parsed.length && activeClass) {
-                        activeClass.students.push(...parsed);
+                    try {
+                        const buf = evt.target.result;
+                        let wb;
+                        if (/\.csv$/i.test(file.name)) {
+                            let text;
+                            try {
+                                text = new TextDecoder('utf-8', { fatal: true }).decode(buf);
+                            } catch (err) {
+                                text = new TextDecoder('windows-874').decode(buf);
+                            }
+                            wb = XLSX.read(text.replace(/^\uFEFF/, ''), { type: 'string', raw: true });
+                        } else {
+                            wb = XLSX.read(buf, { type: 'array' });
+                        }
+                        const firstSheet = wb.Sheets[wb.SheetNames[0]];
+                        const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: '' });
+                        const parsed = parseStudentRows(rows, activeClass.students.length);
+                        if (!parsed.rows.length) {
+                            Swal.fire({ icon: 'warning', title: 'ไม่พบรายชื่อในไฟล์', text: 'กรุณาตรวจสอบว่าไฟล์มีคอลัมน์รหัสนักเรียนหรือชื่อนักเรียน' });
+                            return;
+                        }
+                        const summary = upsertStudentsByCode(activeClass, parsed.rows, parsed.fields);
                         await pushCloudRoster();
                         renderRosterTab(container);
-                        Swal.fire({ icon: 'success', title: `นำเข้าจาก Excel สำเร็จ ${parsed.length} คน`, timer: 1800, showConfirmButton: false });
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'นำเข้าและอัปเดตจาก Excel สำเร็จ',
+                            html: `ห้อง <b>${esc(activeClass.name)}</b><br>อัปเดตข้อมูลเดิม <b>${summary.updated}</b> คน • เพิ่มใหม่ <b>${summary.added}</b> คน<br><small style="color:#64748b;">(ยึดเลขประจำตัวนักเรียนเป็นหลักในการอัปเดต และซิงค์ไปยังทุกสื่อแล้ว)</small>`,
+                            timer: 2600,
+                            showConfirmButton: false,
+                        });
+                    } catch (err) {
+                        Swal.fire({ icon: 'error', title: 'อ่านไฟล์ไม่สำเร็จ', text: err.message || 'ไฟล์ Excel/CSV ไม่ถูกต้อง' });
+                    } finally {
+                        e.target.value = '';
                     }
                 };
                 reader.readAsArrayBuffer(file);
@@ -1091,55 +1143,386 @@
         }
     }
 
-    function parseStudentLines(text, startNo) {
-        const lines = String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-        const out = [];
-        const prefRe = /^(เด็กชาย|เด็กหญิง|ด\.ช\.|ด\.ญ\.|นาย|นางสาว|น\.ส\.)\s*/;
-        const prefMap = { 'เด็กชาย': 'ด.ช.', 'เด็กหญิง': 'ด.ญ.', 'น.ส.': 'นางสาว' };
+    function openStudentModal(activeClass, studentIndex, container) {
+        const isEdit = studentIndex != null && activeClass.students[studentIndex];
+        const existing = isEdit ? activeClass.students[studentIndex] : null;
+        const maxNo = (activeClass.students || []).reduce((m, s) => Math.max(m, Number(s.no) || 0), 0);
+        const cur = existing || {
+            no: maxNo + 1,
+            code: '',
+            prefix: 'ด.ช.',
+            firstName: '',
+            lastName: '',
+            nick: '',
+            gender: '',
+        };
+        const prefixChoices = ['', 'ด.ช.', 'ด.ญ.', 'นาย', 'นางสาว', 'นาง'];
+        const curPrefix = prefixChoices.includes(cur.prefix || '') ? (cur.prefix || '') : '';
 
-        lines.forEach((line) => {
-            if (/^(เลขที่|ลำดับ|รหัส|ชื่อ)/.test(line)) return;
-            const parts = line.split(/[\t,]+/).map((p) => p.trim()).filter(Boolean);
-            let no = startNo + out.length + 1;
+        Swal.fire({
+            title: isEdit ? `แก้ไขข้อมูลนักเรียน (ห้อง ${activeClass.name})` : `เพิ่มนักเรียนห้อง ${activeClass.name}`,
+            html: `
+                <div style="text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13.5px;">
+                    <div><label>เลขที่</label><input id="st-no" type="number" inputmode="numeric" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;" value="${esc(cur.no ?? '')}"></div>
+                    <div><label>รหัสนักเรียน (เลขประจำตัว)</label><input id="st-code" type="text" inputmode="numeric" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;" value="${esc(cur.code || '')}" placeholder="เช่น 26207"></div>
+                    <div>
+                        <label>คำนำหน้า</label>
+                        <select id="st-prefix" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;">
+                            ${prefixChoices.map((p) => `<option value="${esc(p)}"${p === curPrefix ? ' selected' : ''}>${p || '— ไม่ระบุ —'}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label>เพศ</label>
+                        <select id="st-gender" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;">
+                            <option value=""${!cur.gender ? ' selected' : ''}>ตามคำนำหน้า</option>
+                            <option value="m"${cur.gender === 'm' ? ' selected' : ''}>ชาย</option>
+                            <option value="f"${cur.gender === 'f' ? ' selected' : ''}>หญิง</option>
+                        </select>
+                    </div>
+                    <div><label>ชื่อจริง</label><input id="st-first" type="text" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;" value="${esc(cur.firstName || '')}"></div>
+                    <div><label>นามสกุล</label><input id="st-last" type="text" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;" value="${esc(cur.lastName || '')}"></div>
+                    <div style="grid-column:1 / -1;"><label>ชื่อเล่น (แสดงบนจอหน้าห้อง)</label><input id="st-nick" type="text" class="swal2-input" style="margin:4px 0 0;width:100%;height:38px;" value="${esc(cur.nick || '')}" placeholder="เช่น ต้นกล้า"></div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: isEdit ? 'บันทึกการแก้ไข' : 'เพิ่มนักเรียน',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#0d257c',
+            preConfirm: () => {
+                const prefix = document.getElementById('st-prefix').value;
+                const firstName = document.getElementById('st-first').value.trim();
+                if (!firstName) {
+                    Swal.showValidationMessage('กรุณากรอกชื่อนักเรียน');
+                    return false;
+                }
+                const noVal = document.getElementById('st-no').value.trim();
+                const genderInput = document.getElementById('st-gender').value;
+                const derivedGender = ['ด.ช.', 'นาย'].includes(prefix) ? 'm' : ['ด.ญ.', 'นางสาว', 'นาง'].includes(prefix) ? 'f' : '';
+                return {
+                    no: noVal === '' ? '' : Number(noVal),
+                    code: normThaiDigits(document.getElementById('st-code').value).trim(),
+                    prefix,
+                    firstName,
+                    lastName: document.getElementById('st-last').value.trim(),
+                    nick: document.getElementById('st-nick').value.trim(),
+                    gender: genderInput || derivedGender,
+                };
+            },
+        }).then(async (res) => {
+            if (res.isConfirmed && res.value) {
+                if (isEdit) {
+                    Object.assign(existing, res.value);
+                } else {
+                    activeClass.students.push(Object.assign({ id: 's_' + Date.now() }, res.value));
+                }
+                sortStudentsByNo(activeClass.students);
+                await pushCloudRoster();
+                renderRosterTab(container);
+                Swal.fire({
+                    icon: 'success',
+                    title: isEdit ? 'บันทึกการแก้ไขเรียบร้อย' : 'เพิ่มนักเรียนเรียบร้อย',
+                    timer: 1400,
+                    showConfirmButton: false,
+                });
+            }
+        });
+    }
+
+    function exportClassToExcel(activeClass) {
+        const sorted = (activeClass.students || []).slice();
+        sortStudentsByNo(sorted);
+        const rows = [['เลขที่', 'รหัสนักเรียน', 'คำนำหน้า', 'ชื่อ', 'นามสกุล', 'ชื่อเล่น', 'เพศ']];
+        sorted.forEach((s, idx) => {
+            rows.push([
+                s.no != null && s.no !== '' ? Number(s.no) : idx + 1,
+                String(s.code || ''),
+                String(s.prefix || ''),
+                String(s.firstName || ''),
+                String(s.lastName || ''),
+                String(s.nick || ''),
+                s.gender === 'm' ? 'ชาย' : s.gender === 'f' ? 'หญิง' : '',
+            ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{ wch: 8 }, { wch: 15 }, { wch: 11 }, { wch: 18 }, { wch: 20 }, { wch: 14 }, { wch: 10 }];
+        const wsHelp = XLSX.utils.aoa_to_sheet([
+            ['คำแนะนำการแก้ไขและนำเข้ากลับเพื่ออัปเดตข้อมูล'],
+            ['1. คอลัมน์ "รหัสนักเรียน" ใช้เป็นรหัสหลักในการจับคู่เพื่ออัปเดตข้อมูลนักเรียนเดิมโดยไม่ทำให้แต้มหรือประวัติหาย'],
+            ['2. คุณครูสามารถแก้ไข เลขที่ คำนำหน้า ชื่อ นามสกุล ชื่อเล่น หรือเพศ แล้วบันทึกไฟล์นี้'],
+            ['3. หากเพิ่มแถวนักเรียนใหม่ที่ยังไม่มีรหัสนักเรียนในห้อง ระบบจะเพิ่มเป็นนักเรียนใหม่ให้โดยอัตโนมัติ'],
+            ['4. นำไฟล์ที่แก้ไขแล้วกลับมากดปุ่ม "นำเข้า/อัปเดต Excel (.xlsx/.csv)" ที่หน้าหลักเพื่ออัปเดตและซิงค์ทุกสื่อ'],
+        ]);
+        wsHelp['!cols'] = [{ wch: 90 }];
+        const wb = XLSX.utils.book_new();
+        const sheetName = String(activeClass.name || 'รายชื่อนักเรียน').replace(/[\\/?*[\]:]/g, '-').slice(0, 31) || 'รายชื่อนักเรียน';
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.utils.book_append_sheet(wb, wsHelp, 'คำอธิบาย');
+        const safeName = String(activeClass.name || 'class').replace(/[\\/:*?"<>|\s]+/g, '_');
+        const stamp = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `รายชื่อนักเรียน_${safeName}_${stamp}.xlsx`);
+    }
+
+    const ROSTER_PREFIX_RE = /^(เด็กชาย|เด็กหญิง|ด\.ช\.|ด\.ญ\.|ดช\.|ดญ\.|นางสาว|น\.ส\.|นาย|นาง)\s*/;
+    const ROSTER_PREFIX_MAP = { 'เด็กชาย': 'ด.ช.', 'เด็กหญิง': 'ด.ญ.', 'ดช.': 'ด.ช.', 'ดญ.': 'ด.ญ.', 'น.ส.': 'นางสาว' };
+    const ROSTER_HEADER_FIELDS = [
+        { f: 'no', alias: ['เลขที่', 'ที่', 'no', 'ลำดับ', 'ลำดับที่'] },
+        { f: 'code', alias: ['รหัสนักเรียน', 'เลขประจำตัว', 'เลขประจำตัวนักเรียน', 'รหัสประจำตัว', 'รหัสประจำตัวนักเรียน', 'รหัส', 'studentid', 'studentcode', 'id', 'code'] },
+        { f: 'prefix', alias: ['คำนำหน้า', 'คำนำหน้าชื่อ', 'prefix', 'title'] },
+        { f: 'firstName', alias: ['ชื่อ', 'ชื่อจริง', 'firstname', 'name'] },
+        { f: 'lastName', alias: ['สกุล', 'นามสกุล', 'lastname', 'surname'] },
+        { f: 'fullName', alias: ['ชื่อสกุล', 'ชื่อนามสกุล', 'ชื่อและนามสกุล', 'ชื่อ-สกุล', 'fullname', 'ชื่อนักเรียน'] },
+        { f: 'nick', alias: ['ชื่อเล่น', 'nickname', 'nick'] },
+        { f: 'gender', alias: ['เพศ', 'gender', 'sex'] },
+    ];
+
+    function normThaiDigits(v) {
+        return String(v ?? '').replace(/[๐-๙]/g, (d) => String('๐๑๒๓๔๕๖๗๘๙'.indexOf(d)));
+    }
+
+    function matchRosterHeader(h) {
+        const k = String(h || '').toLowerCase().replace(/[\s._\-/()]/g, '');
+        if (!k) return '';
+        const hit = ROSTER_HEADER_FIELDS.find((x) => x.alias.some((a) => a.toLowerCase().replace(/[\s._\-/()]/g, '') === k));
+        return hit ? hit.f : '';
+    }
+
+    function parseGenderVal(g, prefix) {
+        const s = String(g || '').trim().toLowerCase();
+        if (/^(ชาย|ช|m|male|ผู้ชาย)$/.test(s)) return 'm';
+        if (/^(หญิง|ญ|f|female|ผู้หญิง)$/.test(s)) return 'f';
+        if (['ด.ช.', 'นาย'].includes(prefix)) return 'm';
+        if (['ด.ญ.', 'นางสาว', 'นาง'].includes(prefix)) return 'f';
+        return '';
+    }
+
+    function sortStudentsByNo(list) {
+        if (!Array.isArray(list)) return;
+        list.sort((a, b) => {
+            const na = a.no === '' || a.no == null || Number.isNaN(Number(a.no)) ? Infinity : Number(a.no);
+            const nb = b.no === '' || b.no == null || Number.isNaN(Number(b.no)) ? Infinity : Number(b.no);
+            return na - nb;
+        });
+    }
+
+    function parseStudentRows(rows, startNo) {
+        const clean = (rows || []).map((r) => (Array.isArray(r) ? r : [r]).map((c) => String(c ?? '').replace(/\s+/g, ' ').trim()));
+        let headerIdx = -1;
+        let bestHits = 0;
+        clean.slice(0, 10).forEach((r, i) => {
+            const hits = r.filter((c) => matchRosterHeader(c)).length;
+            if (hits >= 2 && hits > bestHits) { bestHits = hits; headerIdx = i; }
+        });
+
+        const out = [];
+        const fields = new Set();
+
+        if (headerIdx >= 0) {
+            const used = new Set();
+            const map = clean[headerIdx].map((c) => {
+                const f = matchRosterHeader(c);
+                if (!f || used.has(f)) return '';
+                used.add(f);
+                fields.add(f);
+                return f;
+            });
+            if (fields.has('fullName')) {
+                fields.add('prefix');
+                fields.add('firstName');
+                fields.add('lastName');
+            }
+            const get = (r, f) => {
+                const i = map.indexOf(f);
+                return i >= 0 ? String(r[i] ?? '').trim() : '';
+            };
+
+            clean.slice(headerIdx + 1).forEach((r) => {
+                if (!r.some(Boolean)) return;
+                const noRaw = normThaiDigits(get(r, 'no')).trim();
+                const code = normThaiDigits(get(r, 'code')).trim();
+                let prefix = get(r, 'prefix');
+                let firstName = get(r, 'firstName');
+                let lastName = get(r, 'lastName');
+                const fullName = get(r, 'fullName');
+                const nick = get(r, 'nick');
+                const genderRaw = get(r, 'gender');
+
+                if (fullName && !firstName) {
+                    let rest = fullName;
+                    const m = ROSTER_PREFIX_RE.exec(rest);
+                    if (m) {
+                        prefix = prefix || m[1];
+                        rest = rest.slice(m[0].length).trim();
+                    }
+                    const sp = rest.split(/\s+/);
+                    firstName = sp.shift() || '';
+                    lastName = lastName || sp.join(' ');
+                }
+                if (!prefix && firstName) {
+                    const m = ROSTER_PREFIX_RE.exec(firstName);
+                    if (m) {
+                        prefix = m[1];
+                        firstName = firstName.slice(m[0].length).trim();
+                    }
+                }
+                prefix = ROSTER_PREFIX_MAP[prefix] || prefix;
+                const no = noRaw !== '' && /^\d+$/.test(noRaw) ? Number(noRaw) : '';
+                const gender = parseGenderVal(genderRaw, prefix);
+
+                if (firstName || code) {
+                    out.push({
+                        no,
+                        code,
+                        prefix,
+                        firstName,
+                        lastName,
+                        nick,
+                        gender,
+                    });
+                }
+            });
+            return { rows: out, fields };
+        }
+
+        // ไม่มีหัวตาราง: วิเคราะห์ทีละแถว
+        const preList = ['เด็กชาย', 'เด็กหญิง', 'นางสาว', 'ด.ช.', 'ด.ญ.', 'ดช.', 'ดญ.', 'น.ส.', 'นาย', 'นาง'];
+        clean.forEach((origCols) => {
+            const cols = origCols.filter((c) => c !== '');
+            if (!cols.length) return;
+            if (/^(เลขที่|ลำดับ|รหัส|ชื่อ)/.test(cols[0])) return;
+
+            let no = '';
             let code = '';
             let prefix = '';
             let firstName = '';
             let lastName = '';
             let nick = '';
+            let genderRaw = '';
 
-            parts.forEach((p) => {
-                if (/^\d{1,2}$/.test(p)) no = Number(p);
-                else if (/^\d{4,6}$/.test(p)) code = p;
-                else if (/^(ด\.ช\.|ด\.ญ\.|เด็กชาย|เด็กหญิง|นาย|นางสาว|น\.ส\.)$/.test(p)) prefix = prefMap[p] || p;
-                else if (!firstName) {
-                    let rest = p;
-                    const m = prefRe.exec(rest);
-                    if (m) {
-                        prefix = prefMap[m[1]] || m[1];
-                        rest = rest.slice(m[0].length).trim();
-                    }
-                    const sp = rest.split(/\s+/);
-                    firstName = sp[0] || '';
-                    if (sp[1] && !lastName) lastName = sp.slice(1).join(' ');
-                } else if (!lastName) lastName = p;
-                else if (!nick) nick = p;
-            });
+            const c0 = normThaiDigits(cols[0]);
+            if (/^\d{1,3}$/.test(c0)) {
+                no = Number(c0);
+                cols.shift();
+                if (cols.length && /^\d{4,}$/.test(normThaiDigits(cols[0]))) {
+                    code = normThaiDigits(cols.shift());
+                }
+            } else if (/^\d{4,}$/.test(c0)) {
+                code = c0;
+                cols.shift();
+            }
 
-            if (firstName) {
-                const gender = ['ด.ช.', 'นาย'].includes(prefix) ? 'm' : ['ด.ญ.', 'นางสาว'].includes(prefix) ? 'f' : '';
+            if (cols.length && /^(ชาย|หญิง|ช|ญ|m|f|male|female)$/i.test(cols[cols.length - 1])) {
+                genderRaw = cols.pop();
+            }
+
+            if (cols.length >= 3 && preList.includes(cols[0])) {
+                prefix = ROSTER_PREFIX_MAP[cols[0]] || cols[0];
+                firstName = cols[1] || '';
+                lastName = cols[2] || '';
+                nick = cols[3] || '';
+            } else if (cols.length >= 2 && !preList.some((p) => cols[0].startsWith(p))) {
+                firstName = cols[0] || '';
+                lastName = cols[1] || '';
+                nick = cols[2] || '';
+            } else if (cols.length) {
+                let rest = cols[0];
+                const m = ROSTER_PREFIX_RE.exec(rest);
+                if (m) {
+                    prefix = ROSTER_PREFIX_MAP[m[1]] || m[1];
+                    rest = rest.slice(m[0].length).trim();
+                }
+                const sp = rest.split(/\s+/);
+                firstName = sp.shift() || '';
+                lastName = sp.join(' ');
+                nick = cols[1] || '';
+            }
+
+            if (firstName || code) {
                 out.push({
-                    id: `s_${Date.now()}_${out.length}`,
-                    no,
+                    no: no !== '' ? no : (startNo + out.length + 1),
                     code,
                     prefix,
                     firstName,
                     lastName,
                     nick,
-                    gender,
+                    gender: parseGenderVal(genderRaw, prefix),
                 });
             }
         });
-        return out;
+        return { rows: out, fields: null };
+    }
+
+    function parseStudentText(text, startNo) {
+        const lines = String(text || '').replace(/\r/g, '').split('\n').filter((l) => l.trim());
+        const rows = lines.map((l) => (l.includes('\t') ? l.split('\t') : l.includes(',') ? l.split(',') : [l]));
+        return parseStudentRows(rows, startNo);
+    }
+
+    /**
+     * อัปเดตหรือเพิ่มรายชื่อนักเรียนโดยยึด "รหัสนักเรียน (code)" เป็นข้อมูลหลัก
+     * - หากพบรหัสนักเรียนตรงกับที่มีอยู่ในห้อง: อัปเดตข้อมูลนักเรียนคนเดิม (คง id และ avatar เดิมไว้)
+     * - หากไม่พบรหัส (หรือไม่มีรหัส): เพิ่มเป็นนักเรียนใหม่
+     */
+    function upsertStudentsByCode(activeClass, parsedRows, fields) {
+        if (!Array.isArray(activeClass.students)) activeClass.students = [];
+        const byCode = new Map();
+        activeClass.students.forEach((s) => {
+            const c = normThaiDigits(s.code).trim();
+            if (c) byCode.set(c, s);
+        });
+
+        let maxNo = activeClass.students.reduce((m, s) => Math.max(m, Number(s.no) || 0), 0);
+        let updated = 0;
+        let added = 0;
+        const hasField = (f) => (fields ? fields.has(f) : false);
+
+        parsedRows.forEach((item, idx) => {
+            const c = normThaiDigits(item.code).trim();
+            const existing = c ? byCode.get(c) : null;
+
+            if (existing) {
+                existing.code = c;
+                if (fields) {
+                    if (hasField('no') && item.no !== '') existing.no = Number(item.no);
+                    if (hasField('prefix')) existing.prefix = item.prefix;
+                    if (hasField('firstName') && item.firstName) existing.firstName = item.firstName;
+                    if (hasField('lastName')) existing.lastName = item.lastName;
+                    if (hasField('nick')) existing.nick = item.nick;
+                    if (hasField('gender')) {
+                        existing.gender = item.gender;
+                    } else if (hasField('prefix')) {
+                        const derived = parseGenderVal('', existing.prefix);
+                        if (derived) existing.gender = derived;
+                    }
+                } else {
+                    if (item.no !== '' && item.no != null) existing.no = Number(item.no);
+                    if (item.prefix) existing.prefix = item.prefix;
+                    if (item.firstName) existing.firstName = item.firstName;
+                    if (item.lastName) existing.lastName = item.lastName;
+                    if (item.nick) existing.nick = item.nick;
+                    if (item.gender) existing.gender = item.gender;
+                }
+                updated += 1;
+            } else if (item.firstName) {
+                const noVal = item.no !== '' && item.no != null ? Number(item.no) : ++maxNo;
+                if (noVal > maxNo) maxNo = noVal;
+                const newStu = {
+                    id: `s_${Date.now()}_${idx}`,
+                    no: noVal,
+                    code: c,
+                    prefix: item.prefix || '',
+                    firstName: item.firstName,
+                    lastName: item.lastName || '',
+                    nick: item.nick || '',
+                    gender: item.gender || parseGenderVal('', item.prefix),
+                };
+                activeClass.students.push(newStu);
+                if (c) byCode.set(c, newStu);
+                added += 1;
+            }
+        });
+
+        sortStudentsByNo(activeClass.students);
+        return { updated, added };
     }
 
     /* =====================================================================
