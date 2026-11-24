@@ -1,6 +1,6 @@
 import { ensureD1Schema } from "./_db.js";
 /* =====================================================================
-   GET /api/app-data?appId=... — ดึงข้อมูลของสื่อการสอน (หรือดึงทั้งหมด 7 ระบบเมื่อไม่ระบุ appId)
+   GET /api/app-data?appId=... — ดึงข้อมูลของสื่อการสอน (หรือดึงทั้งหมด 8 ระบบเมื่อไม่ระบุ appId)
    PUT /api/app-data           — บันทึกข้อมูลของสื่อการสอนลง Cloudflare D1 (ไม่เขียนทับ master_classes)
    ===================================================================== */
 import { jsonResponse, requireAuth } from './_utils.js';
@@ -13,6 +13,7 @@ const VALID_APPS = new Set([
     'vs-snake-ladder-quiz',
     'vs-buzzer',
     'vs-classroom-timer',
+    'vs-bingo-maker',
 ]);
 
 export async function onRequestGet(context) {

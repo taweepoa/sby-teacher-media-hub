@@ -2,9 +2,9 @@
    SBY Cloud Sync & Unified Navigation SDK (vs-cloud-sync.js)
    โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน | พัฒนาระบบโดย ครูทวีป นวคุณานนท์
    - เชื่อมโยงระบบยืนยันตัวตน Google Sign-In (@sby.ac.th + รายชื่อครูอนุมัติ)
-   - ซิงค์ข้อมูลโรงเรียนและรายชื่อนักเรียนส่วนกลาง (Master Roster Bridge) เข้าสู่ทั้ง 7 แอป
+   - ซิงค์ข้อมูลโรงเรียนและรายชื่อนักเรียนส่วนกลาง (Master Roster Bridge) เข้าสู่ทั้ง 8 แอป
    - บันทึกข้อมูลขึ้น Cloudflare D1 อัตโนมัติ (Offline-First + Real-time Cloud Sync)
-   - แสดงแถบนำทางส่วนกลาง (SBY Portal Bar) เพื่อสลับไปมาระหว่างสื่อทั้ง 7 ระบบได้ทันที
+   - แสดงแถบนำทางส่วนกลาง (SBY Portal Bar) เพื่อสลับไปมาระหว่างสื่อทั้ง 8 ระบบได้ทันที
    ===================================================================== */
 (function () {
     'use strict';
@@ -21,6 +21,7 @@
         { id: 'vs-snake-ladder-quiz', slug: 'snake-ladder', name: 'เกมบันไดงูตอบคำถามหน้าชั้นเรียน', short: 'เกมบันไดงู', icon: 'fa-dice', color: '#16a34a', path: '/apps/snake-ladder/index.html' },
         { id: 'vs-buzzer', slug: 'buzzer', name: 'ระบบกดปุ่มตอบเร็ว (Buzzer)', short: 'กดปุ่มตอบเร็ว', icon: 'fa-bell', color: '#ea580c', path: '/apps/buzzer/index.html' },
         { id: 'vs-classroom-timer', slug: 'timer', name: 'นาฬิกาจับเวลาหน้าชั้นเรียน', short: 'นาฬิกาจับเวลา', icon: 'fa-stopwatch', color: '#0d9488', path: '/apps/timer/index.html' },
+        { id: 'vs-bingo-maker', slug: 'bingo', name: 'เกมบิงโกคำศัพท์และสร้างการ์ดอัตโนมัติ', short: 'บิงโกคำศัพท์', icon: 'fa-table-cells', color: '#db2777', path: '/apps/bingo/index.html' },
     ];
 
     function getAuth() {

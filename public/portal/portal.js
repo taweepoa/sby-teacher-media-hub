@@ -112,6 +112,20 @@
             features: ['เวลาด่วน 1-15 นาที', 'ไฟจราจรวัดเสียงดัง', 'จับเวลาหลายช่วง', 'ตารางออดคาบเรียน'],
             usesRoster: false,
         },
+        {
+            id: 'vs-bingo-maker',
+            slug: 'bingo',
+            storageKey: 'vs_bingo_maker.data.v1',
+            tag: 'เกมทบทวนคำศัพท์ & สร้างการ์ด',
+            name: 'เกมบิงโกคำศัพท์และสร้างการ์ดอัตโนมัติ',
+            desc: 'สร้างชุดคำศัพท์/คำถาม-คำตอบ สุ่มการ์ดบิงโก 3×3, 4×4, 5×5 อัตโนมัติไม่ซ้ำใบ พิมพ์การ์ด A4 พร้อมจอเรียกคำหน้าชั้นเรียน ตรวจบิงโกอัตโนมัติ และออกรายงาน .docx',
+            icon: 'fa-table-cells',
+            gradient: 'linear-gradient(135deg, #9d174d 0%, #db2777 55%, #f472b6 100%)',
+            path: 'apps/bingo/index.html',
+            manual: 'apps/bingo/docs/คู่มือการใช้งาน.pdf',
+            features: ['สุ่มการ์ดไม่ซ้ำใบ', 'พิมพ์การ์ด A4', 'จอเรียกคำหน้าห้อง', 'ตรวจบิงโก & .docx'],
+            usesRoster: true,
+        },
     ];
 
     const DEFAULT_ROSTER = {
@@ -1853,7 +1867,7 @@
                     <h3><i class="fas fa-cloud-arrow-up" style="color:#0284c7;"></i>ศูนย์สำรองและกู้คืนข้อมูลรวมทั้ง 7 ระบบ (Unified Full Backup)</h3>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;">
                         <button type="button" class="sby-btn sby-btn-primary" id="btn-export-full-bundle">
-                            <i class="fas fa-download"></i><span>ดาวน์โหลดข้อมูลทั้งหมด 7 ระบบ (.json)</span>
+                            <i class="fas fa-download"></i><span>ดาวน์โหลดข้อมูลทั้งหมด 8 ระบบ (.json)</span>
                         </button>
                         <label class="sby-btn sby-btn-outline" style="margin:0;cursor:pointer;">
                             <i class="fas fa-folder-open"></i><span>กู้คืนข้อมูลจากไฟล์สำรองรวม (.json)</span>
