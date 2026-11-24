@@ -126,6 +126,20 @@
             features: ['สุ่มการ์ดไม่ซ้ำใบ', 'พิมพ์การ์ด A4', 'จอเรียกคำหน้าห้อง', 'ตรวจบิงโก & .docx'],
             usesRoster: true,
         },
+        {
+            id: 'vs-team-quiz',
+            slug: 'team-quiz',
+            storageKey: 'vs_team_quiz.data.v1',
+            tag: 'แข่งขันตอบคำถาม 2 หน้าจอ',
+            name: 'เกมตอบคำถามแข่งขันแบบทีม',
+            desc: 'จัดการแข่งขันตอบคำถามแบบทีมพร้อมจอควบคุมครูและจอแสดงผลโปรเจกเตอร์แยกอิสระ รองรับคำถามปรนัย/อัตนัยพร้อมรูปภาพ ปุ่มกดออด 1–8 ทีม คีย์ลัดรีโมต และออกรายงาน .docx',
+            icon: 'fa-people-arrows',
+            gradient: 'linear-gradient(135deg, #7f1d1d 0%, #b91c1c 55%, #f87171 100%)',
+            path: 'apps/team-quiz/index.html',
+            manual: 'apps/team-quiz/docs/คู่มือการใช้งาน.pdf',
+            features: ['2 จอ (ครู/โปรเจกเตอร์)', 'รองรับ 2–8 ทีม', 'นำเข้าข้อสอบ Excel', 'รายงานผล .docx'],
+            usesRoster: true,
+        },
     ];
 
     const DEFAULT_ROSTER = {
