@@ -9,3 +9,8 @@ STUDENT_EMAIL_REGEX = "^sby_\\d{5}@sby\\.ac\\.th$"
 ADMIN_EMAIL = "taweep@sby.ac.th"
 GOOGLE_CLIENT_ID = ""
 AUTH_POLICY = "domain_teachers"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sby_media_hub_db"
+database_id = "b4f2c7eb-d8bf-4151-be2f-c018a05c80c8"
