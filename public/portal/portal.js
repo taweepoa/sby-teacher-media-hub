@@ -703,6 +703,7 @@
     }
 
     function renderAppsTab(container) {
+        const hasClasses = Array.isArray(state.roster?.classes) && state.roster.classes.length > 0;
         container.innerHTML = `
             <div class="sby-section-header">
                 <div class="sby-section-title">
@@ -718,6 +719,23 @@
                     </button>
                 </div>
             </div>
+
+            ${!hasClasses ? `
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,#eff6ff 0%,#f0f9ff 100%);border:1px solid #bae6fd;border-radius:14px;padding:16px 20px;margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span style="width:42px;height:42px;border-radius:12px;background:#0284c7;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+                            <i class="fas fa-cloud-arrow-down"></i>
+                        </span>
+                        <div>
+                            <b style="color:#07164a;font-size:15px;">ยังไม่มีรายชื่อนักเรียนในบัญชีของคุณครู</b>
+                            <div style="color:#475569;font-size:13.5px;">คุณครูสามารถดึงรายชื่อนักเรียนจากฐานข้อมูลกลางที่ผู้ดูแลระบบ (Admin) เพิ่มไว้ โดยเลือกเฉพาะห้องเรียนที่สอนได้ทันที</div>
+                        </div>
+                    </div>
+                    <button type="button" class="sby-btn sby-btn-primary sby-btn-sm" id="btn-apps-pull-admin">
+                        <i class="fas fa-cloud-arrow-down"></i><span>ดึงรายชื่อกลาง (เลือกห้องที่สอน)</span>
+                    </button>
+                </div>
+            ` : ''}
 
             <div class="sby-apps-grid">
                 ${APPS.map((app, idx) => `
@@ -770,6 +788,11 @@
         };
 
         document.getElementById('btn-goto-roster').onclick = () => switchTab('roster');
+
+        const pullFromAppsBtn = document.getElementById('btn-apps-pull-admin');
+        if (pullFromAppsBtn) {
+            pullFromAppsBtn.onclick = () => openPullAdminRosterModal(() => renderAppsTab(container));
+        }
     }
 
     /* =====================================================================
@@ -830,6 +853,9 @@
                 <div class="sby-panel-head">
                     <h3><i class="fas fa-users-rectangle" style="color:#e11d48;"></i>ทะเบียนห้องเรียนและรายชื่อนักเรียนส่วนกลาง (Master Student Roster)</h3>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="sby-btn sby-btn-primary sby-btn-sm" id="btn-pull-admin-roster" title="ดึงรายชื่อนักเรียนจากฐานข้อมูลกลางที่ผู้ดูแลระบบ (Admin) เพิ่มไว้ โดยเลือกเฉพาะห้องที่สอนได้">
+                            <i class="fas fa-cloud-arrow-down"></i><span>ดึงรายชื่อกลาง (Admin)</span>
+                        </button>
                         <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" id="btn-add-class">
                             <i class="fas fa-plus"></i><span>เพิ่มห้องเรียนใหม่</span>
                         </button>
@@ -861,13 +887,17 @@
                         <div>
                             <b style="font-size:16px;color:#07164a;">ห้อง ${esc(activeClass.name)}</b>
                             <span style="color:#64748b;font-size:13.5px;margin-left:10px;">จำนวนนักเรียน ${(activeClass.students || []).length} คน</span>
+                            ${activeClass.note ? `<span style="color:#475569;font-size:13px;margin-left:8px;">• ${esc(activeClass.note)}</span>` : ''}
                             <div style="color:#64748b;font-size:12px;margin-top:2px;">
                                 <i class="fas fa-circle-info" style="color:#0284c7;"></i> สามารถส่งออกไฟล์ Excel ไปแก้ไขแล้วนำเข้ากลับได้ — ระบบจะยึด<b>เลขประจำตัวนักเรียน</b>เป็นหลักในการอัปเดตข้อมูลเดิมโดยไม่ทำให้แต้มหรือประวัติหาย
                             </div>
                         </div>
-                        <div style="display:flex;gap:8px;">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
                             <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" id="btn-add-student-row">
                                 <i class="fas fa-user-plus"></i><span>เพิ่มนักเรียนรายคน</span>
+                            </button>
+                            <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" id="btn-rename-class" title="แก้ไขชื่อห้องเรียนหรือหมายเหตุ">
+                                <i class="fas fa-pen-to-square" style="color:#0284c7;"></i><span>แก้ไขชื่อห้อง</span>
                             </button>
                             <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" id="btn-delete-class" style="color:#be123c;">
                                 <i class="fas fa-trash"></i><span>ลบห้องนี้</span>
@@ -916,7 +946,21 @@
                             </tbody>
                         </table>
                     </div>
-                ` : '<p>ยังไม่มีห้องเรียน กดปุ่ม "เพิ่มห้องเรียนใหม่" เพื่อเริ่มต้น</p>'}
+                ` : `
+                    <div style="text-align:center;padding:34px 20px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;">
+                        <i class="fas fa-users-rectangle" style="font-size:36px;color:#0284c7;margin-bottom:10px;"></i>
+                        <h4 style="margin:0 0 6px;color:#07164a;font-size:17px;">ยังไม่มีห้องเรียนในบัญชีของคุณครู</h4>
+                        <p style="margin:0 0 18px;color:#64748b;font-size:14px;">คุณครูสามารถดึงรายชื่อนักเรียนจากฐานข้อมูลกลางที่ผู้ดูแลระบบ (Admin) เพิ่มไว้โดยเลือกเฉพาะห้องที่สอน หรือสร้างห้องเรียนใหม่เองได้เลย</p>
+                        <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+                            <button type="button" class="sby-btn sby-btn-primary" id="btn-empty-pull-admin">
+                                <i class="fas fa-cloud-arrow-down"></i><span>ดึงรายชื่อกลาง (เลือกห้องจาก Admin)</span>
+                            </button>
+                            <button type="button" class="sby-btn sby-btn-outline" id="btn-empty-add-class">
+                                <i class="fas fa-plus"></i><span>เพิ่มห้องเรียนใหม่เอง</span>
+                            </button>
+                        </div>
+                    </div>
+                `}
             </div>
         `;
 
@@ -949,8 +993,18 @@
             };
         });
 
+        // Event: Pull classes selectively from Admin central roster
+        const pullAdminBtn = document.getElementById('btn-pull-admin-roster');
+        if (pullAdminBtn) {
+            pullAdminBtn.onclick = () => openPullAdminRosterModal(() => renderRosterTab(container));
+        }
+        const emptyPullBtn = document.getElementById('btn-empty-pull-admin');
+        if (emptyPullBtn) {
+            emptyPullBtn.onclick = () => openPullAdminRosterModal(() => renderRosterTab(container));
+        }
+
         // Event: Add new class
-        document.getElementById('btn-add-class').onclick = () => {
+        const triggerAddClass = () => {
             Swal.fire({
                 title: 'เพิ่มห้องเรียนใหม่',
                 input: 'text',
@@ -958,6 +1012,7 @@
                 inputPlaceholder: 'เช่น ม.2/2',
                 showCancelButton: true,
                 confirmButtonText: 'สร้างห้องเรียน',
+                cancelButtonText: 'ยกเลิก',
                 confirmButtonColor: '#0d257c',
             }).then(async (res) => {
                 if (res.isConfirmed && res.value && res.value.trim()) {
@@ -975,6 +1030,15 @@
                 }
             });
         };
+        document.getElementById('btn-add-class').onclick = triggerAddClass;
+        const emptyAddBtn = document.getElementById('btn-empty-add-class');
+        if (emptyAddBtn) emptyAddBtn.onclick = triggerAddClass;
+
+        // Event: Rename active class
+        const renameClsBtn = document.getElementById('btn-rename-class');
+        if (renameClsBtn && activeClass) {
+            renameClsBtn.onclick = () => openRenameClassModal(activeClass, container);
+        }
 
         // Event: Export active class roster to Excel for editing & re-import
         const exportExcelBtn = document.getElementById('btn-export-excel-roster');
@@ -1141,6 +1205,260 @@
                 reader.readAsArrayBuffer(file);
             };
         }
+    }
+
+    function openRenameClassModal(activeClass, container) {
+        Swal.fire({
+            title: `แก้ไขชื่อห้องเรียน (${activeClass.name})`,
+            html: `
+                <div style="text-align:left;display:grid;gap:12px;font-size:13.5px;">
+                    <div>
+                        <label style="font-weight:700;">ชื่อชั้น/ห้องเรียน</label>
+                        <input id="cls-edit-name" type="text" class="swal2-input" style="margin:4px 0 0;width:100%;height:40px;" maxlength="40" value="${esc(activeClass.name || '')}" placeholder="เช่น ม.2/1">
+                    </div>
+                    <div>
+                        <label style="font-weight:700;">หมายเหตุ (ไม่บังคับ)</label>
+                        <input id="cls-edit-note" type="text" class="swal2-input" style="margin:4px 0 0;width:100%;height:40px;" maxlength="120" value="${esc(activeClass.note || '')}" placeholder="เช่น ครูประจำชั้น / รายวิชาที่สอน">
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'บันทึกชื่อห้อง',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#0d257c',
+            preConfirm: () => {
+                const name = document.getElementById('cls-edit-name').value.trim();
+                const note = document.getElementById('cls-edit-note').value.trim();
+                if (!name) {
+                    Swal.showValidationMessage('กรุณากรอกชื่อห้องเรียน');
+                    return false;
+                }
+                const dup = (state.roster.classes || []).some((c) => c.id !== activeClass.id && c.name.trim() === name);
+                if (dup) {
+                    Swal.showValidationMessage(`มีห้องเรียนชื่อ "${name}" อยู่แล้ว`);
+                    return false;
+                }
+                return { name, note };
+            },
+        }).then(async (res) => {
+            if (res.isConfirmed && res.value) {
+                activeClass.name = res.value.name;
+                activeClass.note = res.value.note;
+                await pushCloudRoster();
+                renderRosterTab(container);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'แก้ไขชื่อห้องเรียบร้อย',
+                    text: `เปลี่ยนเป็นห้อง "${activeClass.name}" และซิงค์ไปยังสื่อทั้งหมดแล้ว`,
+                    timer: 1600,
+                    showConfirmButton: false,
+                });
+            }
+        });
+    }
+
+    function mergeSelectedAdminClasses(selectedClasses) {
+        if (!Array.isArray(state.roster.classes)) state.roster.classes = [];
+        const allFields = new Set(['no', 'code', 'prefix', 'firstName', 'lastName', 'nick', 'gender']);
+        let addedClasses = 0;
+        let updatedClasses = 0;
+        let totalStudents = 0;
+        let firstTouchedId = '';
+
+        selectedClasses.forEach((src, i) => {
+            if (!src || !src.name) return;
+            const srcStudents = Array.isArray(src.students) ? src.students : [];
+            const existing = state.roster.classes.find((c) => c.id === src.id)
+                || state.roster.classes.find((c) => c.name.trim() === src.name.trim());
+
+            if (existing) {
+                if (src.note && !existing.note) existing.note = src.note;
+                const mapped = srcStudents.map((s, idx) => ({
+                    no: s.no != null && s.no !== '' ? Number(s.no) : idx + 1,
+                    code: normThaiDigits(s.code).trim(),
+                    prefix: s.prefix || '',
+                    firstName: s.firstName || '',
+                    lastName: s.lastName || '',
+                    nick: s.nick || '',
+                    gender: s.gender || parseGenderVal('', s.prefix),
+                }));
+                upsertStudentsByCode(existing, mapped, allFields);
+                updatedClasses += 1;
+                totalStudents += mapped.length;
+                if (!firstTouchedId) firstTouchedId = existing.id;
+            } else {
+                const usedIds = new Set(state.roster.classes.map((c) => c.id));
+                const newId = src.id && !usedIds.has(src.id) ? String(src.id) : `cls_${Date.now()}_${i}`;
+                const clonedStudents = srcStudents.map((s, idx) => ({
+                    id: s.id || `s_${newId}_${idx + 1}`,
+                    no: s.no != null && s.no !== '' ? Number(s.no) : idx + 1,
+                    code: normThaiDigits(s.code).trim(),
+                    prefix: s.prefix || '',
+                    firstName: s.firstName || '',
+                    lastName: s.lastName || '',
+                    nick: s.nick || '',
+                    gender: s.gender || parseGenderVal('', s.prefix),
+                }));
+                sortStudentsByNo(clonedStudents);
+                state.roster.classes.push({
+                    id: newId,
+                    name: src.name,
+                    note: src.note || '',
+                    students: clonedStudents,
+                    groups: [],
+                });
+                addedClasses += 1;
+                totalStudents += clonedStudents.length;
+                if (!firstTouchedId) firstTouchedId = newId;
+            }
+        });
+
+        if (firstTouchedId) state.activeClassId = firstTouchedId;
+        return { addedClasses, updatedClasses, totalStudents };
+    }
+
+    async function openPullAdminRosterModal(onAfterPull) {
+        if (!state.token) {
+            Swal.fire({ icon: 'warning', title: 'กรุณาเข้าสู่ระบบก่อน', text: 'การดึงรายชื่อกลางจาก Admin จำเป็นต้องเข้าสู่ระบบออนไลน์' });
+            return;
+        }
+
+        Swal.fire({
+            title: 'กำลังโหลดรายชื่อกลางจากผู้ดูแลระบบ...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading(),
+        });
+
+        let adminClasses = [];
+        try {
+            const res = await fetch('/api/roster?scope=shared', {
+                headers: { 'Authorization': `Bearer ${state.token}` },
+            });
+            const json = await res.json();
+            if (!res.ok || !json.ok) {
+                throw new Error(json.error || 'ไม่สามารถดึงข้อมูลจากฐานข้อมูลกลางได้');
+            }
+            adminClasses = Array.isArray(json.classes) ? json.classes : [];
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'ดึงรายชื่อกลางไม่สำเร็จ',
+                text: err.message || 'กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง',
+            });
+            return;
+        }
+
+        if (!adminClasses.length) {
+            Swal.fire({
+                icon: 'info',
+                title: 'ยังไม่มีรายชื่อนักเรียนในฐานข้อมูลกลาง',
+                text: 'ผู้ดูแลระบบ (Admin) ยังไม่ได้เพิ่มรายชื่อห้องเรียนในฐานข้อมูลกลาง คุณครูสามารถเพิ่มห้องเรียนและนำเข้าไฟล์ Excel เองได้ทันที',
+            });
+            return;
+        }
+
+        const myClasses = state.roster.classes || [];
+        const hasExisting = (cls) => myClasses.some((c) => c.id === cls.id || c.name.trim() === String(cls.name || '').trim());
+
+        const res = await Swal.fire({
+            title: 'ดึงรายชื่อนักเรียนจากฐานข้อมูลกลาง (Admin)',
+            width: 680,
+            html: `
+                <div style="text-align:left;font-size:13.5px;">
+                    <p style="margin:0 0 10px;color:#475569;">
+                        เลือกห้องเรียนที่ต้องการดึงเข้าสู่บัญชีของคุณครู (พบทั้งหมด <b>${adminClasses.length}</b> ห้องเรียน)
+                        <br><small style="color:#0284c7;">* หากเลือกห้องที่มีอยู่แล้ว ระบบจะอัปเดตข้อมูลตามเลขประจำตัวนักเรียนโดยคงแต้มและประวัติเดิมไว้</small>
+                    </p>
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+                        <input id="adm-cls-search" type="text" placeholder="ค้นหาชื่อห้อง เช่น ม.2, ม.4..." style="flex:1 1 200px;padding:7px 11px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:13.5px;">
+                        <button type="button" id="adm-cls-sel-all" class="sby-btn sby-btn-outline sby-btn-sm">เลือกทั้งหมด</button>
+                        <button type="button" id="adm-cls-sel-none" class="sby-btn sby-btn-outline sby-btn-sm">ล้างการเลือก</button>
+                        <span id="adm-cls-count" style="font-size:12.5px;font-weight:700;color:#0d257c;">เลือกแล้ว 0 ห้อง</span>
+                    </div>
+                    <div id="adm-cls-list" style="max-height:320px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:10px;padding:6px;background:#f8fafc;display:flex;flex-direction:column;gap:6px;">
+                        ${adminClasses.map((cls, idx) => {
+                            const exists = hasExisting(cls);
+                            const count = (cls.students || []).length;
+                            return `
+                                <label data-cls-row="${esc(String(cls.name || '').toLowerCase())} ${esc(String(cls.note || '').toLowerCase())}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:8px;background:#ffffff;border:1px solid #e2e8f0;cursor:pointer;">
+                                    <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                                        <input type="checkbox" class="adm-cls-chk" value="${idx}" style="width:18px;height:18px;accent-color:#0d257c;cursor:pointer;">
+                                        <div style="min-width:0;">
+                                            <div style="font-weight:700;color:#07164a;font-size:14.5px;">
+                                                ห้อง ${esc(cls.name)}
+                                                <span style="font-weight:600;color:#64748b;font-size:12.5px;margin-left:6px;">(${count} คน)</span>
+                                            </div>
+                                            ${cls.note || cls.ownerName ? `<div style="font-size:12px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${cls.note ? `${esc(cls.note)} • ` : ''}โดย ${esc(cls.ownerName || 'Admin')}</div>` : ''}
+                                        </div>
+                                    </div>
+                                    <span class="sby-badge ${exists ? 'sby-badge-amber' : 'sby-badge-green'}" style="flex-shrink:0;">
+                                        ${exists ? 'มีห้องนี้แล้ว (อัปเดต)' : 'ห้องใหม่'}
+                                    </span>
+                                </label>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-cloud-arrow-down"></i> ดึงห้องที่เลือก',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#0d257c',
+            didOpen: (popup) => {
+                const countEl = popup.querySelector('#adm-cls-count');
+                const searchEl = popup.querySelector('#adm-cls-search');
+                const rows = Array.from(popup.querySelectorAll('[data-cls-row]'));
+                const chks = Array.from(popup.querySelectorAll('.adm-cls-chk'));
+
+                const updateCount = () => {
+                    const n = chks.filter((c) => c.checked).length;
+                    if (countEl) countEl.textContent = `เลือกแล้ว ${n} ห้อง`;
+                };
+                chks.forEach((c) => c.addEventListener('change', updateCount));
+
+                popup.querySelector('#adm-cls-sel-all').onclick = () => {
+                    rows.forEach((row) => {
+                        if (row.style.display !== 'none') {
+                            const cb = row.querySelector('.adm-cls-chk');
+                            if (cb) cb.checked = true;
+                        }
+                    });
+                    updateCount();
+                };
+                popup.querySelector('#adm-cls-sel-none').onclick = () => {
+                    chks.forEach((cb) => { cb.checked = false; });
+                    updateCount();
+                };
+                searchEl.oninput = () => {
+                    const q = searchEl.value.trim().toLowerCase();
+                    rows.forEach((row) => {
+                        const hay = row.getAttribute('data-cls-row') || '';
+                        row.style.display = !q || hay.includes(q) ? 'flex' : 'none';
+                    });
+                };
+            },
+            preConfirm: () => {
+                const checked = Array.from(document.querySelectorAll('.adm-cls-chk:checked')).map((c) => Number(c.value));
+                if (!checked.length) {
+                    Swal.showValidationMessage('กรุณาเลือกอย่างน้อย 1 ห้องเรียน');
+                    return false;
+                }
+                return checked.map((i) => adminClasses[i]).filter(Boolean);
+            },
+        });
+
+        if (!res.isConfirmed || !res.value || !res.value.length) return;
+
+        const summary = mergeSelectedAdminClasses(res.value);
+        await pushCloudRoster();
+        if (typeof onAfterPull === 'function') onAfterPull();
+        Swal.fire({
+            icon: 'success',
+            title: 'ดึงรายชื่อนักเรียนกลางสำเร็จ',
+            html: `เพิ่มห้องใหม่ <b>${summary.addedClasses}</b> ห้อง • อัปเดตห้องเดิม <b>${summary.updatedClasses}</b> ห้อง<br><small style="color:#64748b;">รวมรายชื่อนักเรียน ${summary.totalStudents} คน และซิงค์ไปยังสื่อทั้ง 7 ระบบแล้ว</small>`,
+            timer: 2600,
+            showConfirmButton: false,
+        });
     }
 
     function openStudentModal(activeClass, studentIndex, container) {
