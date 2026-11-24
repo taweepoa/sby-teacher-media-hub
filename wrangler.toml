@@ -1,4 +1,4 @@
-name = "sby-teacher-media-hub"
+name = "sby-media"
 main = "worker.js"
 compatibility_date = "2024-11-01"
 
