@@ -1,0 +1,102 @@
+/* =====================================================================
+   VS Kit — ธีมสีประจำระบบ (สีเมนูซ้าย + สีเน้นของปุ่ม/ไอคอน/หัวตาราง)
+   ใช้: โหลดต่อจาก vs-app.css แล้วใส่คลาสที่ <body>  เช่น  <body class="vs-theme-emerald">
+   ไม่ใส่คลาส = ม่วงคราม (โทนเดิมของระบบจัดตารางสอน)
+   ทุกระบบใช้ธีมไม่ซ้ำกัน — หัวหน้าโครงการกำหนดธีมไว้ใน BRIEF.md ของแต่ละระบบ
+   ส่วนอื่น (การ์ดสถิติหลากสี, ป้ายสถานะ, ปุ่มเขียว/ส้ม/แดง) คงเดิม เพื่อให้ความหมายของสีเหมือนกันทุกระบบ
+   ===================================================================== */
+:root {
+    --sb-a: #4f46e5; --sb-b: #7c3aed; --sb-glow: rgba(124, 58, 237, .25); --sb-mark: #FFCC70;
+    --ac: #5E5CE6; --ac-2: #BF5AF2; --ac-ink: #3730a3; --ac-soft: #eef2ff; --ac-line: #e0e7ff; --ac-head: #f5f7ff;
+    --hero-1: #1e3a8a; --hero-2: #4338ca; --hero-3: #0f766e;
+}
+/* 1. ม่วงคราม (ค่าเริ่มต้น) */
+.vs-theme-indigo { }
+/* 2. เขียวมรกต */
+.vs-theme-emerald { --sb-a: #047857; --sb-b: #10b981; --sb-glow: rgba(16, 185, 129, .28); --sb-mark: #FDE68A;
+    --ac: #059669; --ac-2: #34d399; --ac-ink: #065f46; --ac-soft: #ecfdf5; --ac-line: #a7f3d0; --ac-head: #f0fdf7;
+    --hero-1: #064e3b; --hero-2: #059669; --hero-3: #0891b2; }
+/* 3. ฟ้าน้ำทะเลสาบ (เขียวอมฟ้า) */
+.vs-theme-lagoon { --sb-a: #0f766e; --sb-b: #0891b2; --sb-glow: rgba(8, 145, 178, .28); --sb-mark: #FDE68A;
+    --ac: #0d9488; --ac-2: #22d3ee; --ac-ink: #115e59; --ac-soft: #f0fdfa; --ac-line: #99f6e4; --ac-head: #f0fdfa;
+    --hero-1: #134e4a; --hero-2: #0d9488; --hero-3: #0369a1; }
+/* 4. ส้มพระอาทิตย์ตก */
+.vs-theme-sunset { --sb-a: #ea580c; --sb-b: #db2777; --sb-glow: rgba(234, 88, 12, .28); --sb-mark: #FEF08A;
+    --ac: #f97316; --ac-2: #ec4899; --ac-ink: #9a3412; --ac-soft: #fff7ed; --ac-line: #fed7aa; --ac-head: #fff7ed;
+    --hero-1: #9a3412; --hero-2: #ea580c; --hero-3: #be185d; }
+/* 5. ทองอำพัน */
+.vs-theme-amber { --sb-a: #b45309; --sb-b: #d97706; --sb-glow: rgba(217, 119, 6, .3); --sb-mark: #FFFFFF;
+    --ac: #d97706; --ac-2: #f59e0b; --ac-ink: #92400e; --ac-soft: #fffbeb; --ac-line: #fde68a; --ac-head: #fffbeb;
+    --hero-1: #78350f; --hero-2: #b45309; --hero-3: #ca8a04; }
+/* 6. ชมพูกุหลาบ */
+.vs-theme-rose { --sb-a: #be185d; --sb-b: #e11d48; --sb-glow: rgba(225, 29, 72, .26); --sb-mark: #FDE68A;
+    --ac: #e11d48; --ac-2: #f472b6; --ac-ink: #9f1239; --ac-soft: #fff1f2; --ac-line: #fecdd3; --ac-head: #fff1f2;
+    --hero-1: #881337; --hero-2: #e11d48; --hero-3: #c026d3; }
+/* 7. แดงเพลิง */
+.vs-theme-crimson { --sb-a: #b91c1c; --sb-b: #ea580c; --sb-glow: rgba(220, 38, 38, .26); --sb-mark: #FDE68A;
+    --ac: #dc2626; --ac-2: #f97316; --ac-ink: #991b1b; --ac-soft: #fef2f2; --ac-line: #fecaca; --ac-head: #fef2f2;
+    --hero-1: #7f1d1d; --hero-2: #dc2626; --hero-3: #ea580c; }
+/* 8. ม่วงองุ่น (ม่วงอมบานเย็น) */
+.vs-theme-grape { --sb-a: #6d28d9; --sb-b: #a21caf; --sb-glow: rgba(162, 28, 175, .26); --sb-mark: #FDE68A;
+    --ac: #9333ea; --ac-2: #d946ef; --ac-ink: #6b21a8; --ac-soft: #faf5ff; --ac-line: #e9d5ff; --ac-head: #faf5ff;
+    --hero-1: #4c1d95; --hero-2: #9333ea; --hero-3: #c026d3; }
+/* 9. เขียวป่า */
+.vs-theme-forest { --sb-a: #166534; --sb-b: #4d7c0f; --sb-glow: rgba(22, 101, 52, .28); --sb-mark: #FDE68A;
+    --ac: #16a34a; --ac-2: #84cc16; --ac-ink: #14532d; --ac-soft: #f0fdf4; --ac-line: #bbf7d0; --ac-head: #f0fdf4;
+    --hero-1: #14532d; --hero-2: #15803d; --hero-3: #65a30d; }
+/* 10. กรมท่ายามค่ำ (น้ำเงินเข้ม + ฟ้าสด) */
+.vs-theme-midnight { --sb-a: #0f172a; --sb-b: #1e3a5f; --sb-glow: rgba(15, 23, 42, .35); --sb-mark: #38BDF8;
+    --ac: #0284c7; --ac-2: #22d3ee; --ac-ink: #075985; --ac-soft: #f0f9ff; --ac-line: #bae6fd; --ac-head: #f0f9ff;
+    --hero-1: #0f172a; --hero-2: #1e40af; --hero-3: #0891b2; }
+/* 11. ม่วงพลัม (ม่วงอมชมพู) */
+.vs-theme-plum { --sb-a: #7e22ce; --sb-b: #db2777; --sb-glow: rgba(219, 39, 119, .26); --sb-mark: #FDE68A;
+    --ac: #a855f7; --ac-2: #ec4899; --ac-ink: #7e22ce; --ac-soft: #fdf4ff; --ac-line: #f5d0fe; --ac-head: #fdf4ff;
+    --hero-1: #581c87; --hero-2: #a21caf; --hero-3: #db2777; }
+/* 12. ปะการัง (ชมพูส้ม) */
+.vs-theme-coral { --sb-a: #e11d48; --sb-b: #f97316; --sb-glow: rgba(249, 115, 22, .28); --sb-mark: #FEF08A;
+    --ac: #f43f5e; --ac-2: #fb923c; --ac-ink: #be123c; --ac-soft: #fff1f2; --ac-line: #fecdd3; --ac-head: #fff5f5;
+    --hero-1: #9f1239; --hero-2: #f43f5e; --hero-3: #f97316; }
+/* 13. มิ้นต์ (เขียวมิ้นต์ + เขียวมะนาว) */
+.vs-theme-mint { --sb-a: #0d9488; --sb-b: #65a30d; --sb-glow: rgba(13, 148, 136, .28); --sb-mark: #FEF08A;
+    --ac: #14b8a6; --ac-2: #84cc16; --ac-ink: #115e59; --ac-soft: #f0fdfa; --ac-line: #99f6e4; --ac-head: #f0fdfa;
+    --hero-1: #134e4a; --hero-2: #0d9488; --hero-3: #4d7c0f; }
+/* 14. ฟ้าสดใส */
+.vs-theme-sky { --sb-a: #0284c7; --sb-b: #06b6d4; --sb-glow: rgba(6, 182, 212, .28); --sb-mark: #FEF08A;
+    --ac: #0ea5e9; --ac-2: #22d3ee; --ac-ink: #075985; --ac-soft: #f0f9ff; --ac-line: #bae6fd; --ac-head: #f0f9ff;
+    --hero-1: #0c4a6e; --hero-2: #0284c7; --hero-3: #0d9488; }
+/* 15. น้ำตาลโกโก้ (น้ำตาลอมส้ม) */
+.vs-theme-cocoa { --sb-a: #7c2d12; --sb-b: #c2410c; --sb-glow: rgba(124, 45, 18, .3); --sb-mark: #FDE68A;
+    --ac: #c2410c; --ac-2: #f59e0b; --ac-ink: #7c2d12; --ac-soft: #fff7ed; --ac-line: #fed7aa; --ac-head: #fff7ed;
+    --hero-1: #431407; --hero-2: #9a3412; --hero-3: #d97706; }
+/* 16. ทับทิม-ม่วง (แดงอมม่วง) */
+.vs-theme-ruby { --sb-a: #9f1239; --sb-b: #7e22ce; --sb-glow: rgba(159, 18, 57, .28); --sb-mark: #FDE68A;
+    --ac: #be123c; --ac-2: #a855f7; --ac-ink: #881337; --ac-soft: #fff1f2; --ac-line: #fecdd3; --ac-head: #fff1f2;
+    --hero-1: #4c0519; --hero-2: #be123c; --hero-3: #7e22ce; }
+
+/* ---------- ผูกตัวแปรธีมเข้ากับส่วนประกอบ ---------- */
+.app-sidebar { background: linear-gradient(180deg, var(--sb-a) 0%, var(--sb-b) 100%); box-shadow: 4px 0 25px var(--sb-glow); }
+.sb-link.active { border-left-color: var(--sb-mark); }
+.tb-title i { color: var(--ac); }
+.tb-term { background: var(--ac-soft); color: var(--ac-ink); border-color: var(--ac-line); }
+.tb-burger { color: var(--ac-ink); background: var(--ac-soft); }
+.tb-burger:hover { background: var(--ac-line); }
+.btn-x.primary { background: linear-gradient(135deg, var(--ac), var(--ac-2)); box-shadow: 0 8px 18px -8px var(--ac); }
+.btn-x.ghost { color: var(--ac-ink); }
+.btn-x.ghost:hover:not(:disabled) { background: var(--ac-soft); }
+.btn-x.soft { background: var(--ac-soft); color: var(--ac-ink); border-color: var(--ac-line); }
+.btn-x.cta { background-image: linear-gradient(120deg, var(--ac), var(--ac-2) 55%, #FF375F); box-shadow: 0 14px 28px -12px var(--ac); }
+.icon-btn { background: var(--ac-soft); color: var(--ac-ink); }
+.icon-btn:hover { background: var(--ac); color: #fff; }
+.icon-btn.edit, .icon-btn.del { }  /* ปุ่มแก้ไข (เหลือง) / ลบ (แดง) คงสีเดิม */
+.msec { color: var(--ac-ink); border-bottom-color: var(--ac-line); }
+.msec i { background: linear-gradient(135deg, var(--ac), var(--ac-2)); }
+.dt thead th { color: var(--ac-ink); background: var(--ac-head); border-bottom-color: var(--ac-line); }
+.num-pill { color: var(--ac-ink); background: var(--ac-soft); }
+.seg a.active, .seg button.active { color: var(--ac-ink); }
+.form-control:focus, .form-select:focus { border-color: var(--ac); box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--ac) 18%, transparent); }
+.hero:not([class*="hero--"]) { --h1: var(--hero-1); --h2: var(--hero-2); --h3: var(--hero-3); }
+.sheet-head { --s1: var(--hero-2); --s2: var(--ac); --s3: var(--ac-2); }
+.swal-x .swal2-confirm.btn-x.primary { background: linear-gradient(135deg, var(--ac), var(--ac-2)); }
+.icon-btn.edit { background: #fef3c7; color: #b45309; }
+.icon-btn.del { background: #fee2e2; color: #dc2626; }
+.icon-btn.del:hover { background: #dc2626; color: #fff; }

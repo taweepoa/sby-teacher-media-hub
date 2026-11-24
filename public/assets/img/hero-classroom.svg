@@ -86,6 +86,6 @@
   <g transform="translate(105, 346)" filter="url(#cardShadow)">
     <rect x="0" y="0" width="590" height="62" rx="14" fill="url(#crimsonGrad)"/>
     <text x="295" y="27" font-family="Sarabun, sans-serif" font-size="15" font-weight="800" fill="#ffffff" text-anchor="middle">☁️ เชื่อมต่อฐานข้อมูลนักเรียนส่วนกลางอัตโนมัติ (Cloudflare D1 &amp; Google Sign-In)</text>
-    <text x="295" y="48" font-family="Sarabun, sans-serif" font-size="12.5" font-weight="600" fill="#ffe4e6" text-anchor="middle">ตั้งค่ารายชื่อนักเรียนครั้งเดียว ใช้งานได้ครบทั้ง 8 ระบบ • ออกรายงานราชการ (.docx) ทันที</text>
+    <text x="295" y="48" font-family="Sarabun, sans-serif" font-size="12.5" font-weight="600" fill="#ffe4e6" text-anchor="middle">ตั้งค่ารายชื่อนักเรียนครั้งเดียว ใช้งานได้ครบทั้ง 9 ระบบ • ออกรายงานราชการ (.docx) ทันที</text>
   </g>
 </svg>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#7f1d1d">
+    <title>จอแสดงผล • เกมตอบคำถามแข่งขันแบบทีม</title>
+    <!-- จอแสดงผลสำหรับโปรเจกเตอร์: เปิดจากปุ่ม "เปิดจอแสดงผล" ในหน้าจอครู แล้วลากหน้าต่างไปจอโปรเจกเตอร์ กดเต็มจอ -->
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/vs-fonts.css">
+    <link rel="stylesheet" href="assets/css/vs-themes.css">
+    <link rel="stylesheet" href="assets/css/board.css">
+</head>
+<body class="board vs-theme-crimson">
+<div class="bd" id="bd">
+    <div class="bd-bg"></div>
+    <header class="bd-top" id="bd-top"></header>
+    <main class="bd-stage" id="bd-stage"></main>
+    <footer class="bd-strip" id="bd-strip"></footer>
+</div>
+<div class="bd-buzz" id="bd-buzz"></div>
+<canvas id="bd-confetti"></canvas>
+
+<div class="bd-hud" id="bd-hud">
+    <span class="link-st" id="bd-link"></span>
+    <button type="button" id="bd-help-btn" title="คีย์ลัด (กด ?)"><i class="fas fa-keyboard"></i><span>คีย์ลัด</span></button>
+    <button type="button" id="bd-full" title="เต็มจอ (กด F)"><i class="fas fa-expand"></i><span>เต็มจอ</span></button>
+</div>
+
+<div class="bd-hint" id="bd-hint">
+    <i class="fas fa-display" style="font-size:22px;color:#fca5a5"></i>
+    <span>ลากหน้าต่างนี้ไปไว้ที่จอโปรเจกเตอร์ แล้วกดแสดงเต็มจอ</span>
+    <button type="button" id="bd-hint-go"><i class="fas fa-expand"></i>แสดงเต็มจอ</button>
+    <button type="button" class="x" id="bd-hint-x" aria-label="ปิดคำแนะนำ"><i class="fas fa-xmark"></i></button>
+</div>
+
+<div class="bd-help" id="bd-help" role="dialog" aria-label="คีย์ลัด">
+    <div class="box">
+        <h3><i class="fas fa-keyboard"></i> คีย์ลัด (ใช้กับรีโมตพรีเซนต์ได้)</h3>
+        <table>
+            <tr><td><kbd>Space</kbd><kbd>→</kbd><kbd>PageDown</kbd></td><td>ขั้นต่อไป: แสดงคำถาม → เฉลย → ข้อถัดไป</td></tr>
+            <tr><td><kbd>←</kbd><kbd>PageUp</kbd><kbd>Ctrl</kbd>+<kbd>Z</kbd></td><td>ย้อนกลับการกระทำล่าสุด</td></tr>
+            <tr><td><kbd>1</kbd> – <kbd>8</kbd></td><td>ปุ่มกดออดของทีม 1–8 (ตั้งปุ่มเองได้ที่หน้าตั้งค่า)</td></tr>
+            <tr><td><kbd>Enter</kbd> / <kbd>Y</kbd></td><td>ทีมที่กดออดตอบถูก</td></tr>
+            <tr><td><kbd>Backspace</kbd> / <kbd>N</kbd></td><td>ทีมที่กดออดตอบผิด (เปิดให้ทีมอื่นกดต่อ)</td></tr>
+            <tr><td><kbd>T</kbd></td><td>เริ่ม/หยุดเวลา</td></tr>
+            <tr><td><kbd>S</kbd> / <kbd>B</kbd></td><td>สลับไปตารางคะแนน / กลับ</td></tr>
+            <tr><td><kbd>F</kbd> / <kbd>F5</kbd></td><td>เต็มจอ / ออกจากเต็มจอ (<kbd>Esc</kbd>)</td></tr>
+        </table>
+        <button type="button" class="close" id="bd-help-close">เข้าใจแล้ว</button>
+    </div>
+</div>
+
+<noscript><div style="padding:40px;font-family:sans-serif;color:#fff">กรุณาเปิดไฟล์นี้ด้วย Google Chrome หรือ Microsoft Edge</div></noscript>
+
+<script src="assets/js/vs-demo.js"></script> <!-- โหมดทดลองใช้ (vipsys) — ฉบับที่ซื้อไม่มีผล -->
+<script src="js/engine.js"></script>
+<script src="js/img.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/link.js"></script>
+<script src="js/board.js"></script>
+</body>
+</html>

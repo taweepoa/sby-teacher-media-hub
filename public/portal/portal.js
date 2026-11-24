@@ -684,7 +684,7 @@
     }
 
     /* =====================================================================
-       TAB 1: คลังสื่อการสอนทั้ง 7 ระบบ (Media Launcher Grid)
+       TAB 1: คลังสื่อการสอนทั้ง 9 ระบบ (Media Launcher Grid)
        ===================================================================== */
     function getAppSummaryText(app) {
         try {
@@ -712,6 +712,13 @@
             if (app.id === 'vs-classroom-timer') {
                 return `ชุดจับเวลาต่อเนื่อง ${(d.sequences || []).length} ชุด • รองรับไฟจราจรวัดเสียง`;
             }
+            if (app.id === 'vs-bingo-maker') {
+                const cards = (d.games || []).reduce((sum, g) => sum + ((g.cards && g.cards.length) || 0), 0);
+                return `ชุดคำศัพท์ ${(d.sets || []).length} ชุด • เกม ${(d.games || []).length} เกม • การ์ด ${cards} ใบ`;
+            }
+            if (app.id === 'vs-team-quiz') {
+                return `ชุดคำถาม ${(d.sets || []).length} ชุด • ทีม ${(d.teams || []).length} ทีม • แข่งขัน ${(d.matches || []).length} ครั้ง`;
+            }
         } catch (e) { /* ignore */ }
         return 'พร้อมใช้งานทันที';
     }
@@ -721,7 +728,7 @@
         container.innerHTML = `
             <div class="sby-section-header">
                 <div class="sby-section-title">
-                    <h2><i class="fas fa-layer-group" style="color:#e11d48;margin-right:8px;"></i>คลังสื่อการสอนและเกมการศึกษาเชิงรุก (7 ระบบ)</h2>
+                    <h2><i class="fas fa-layer-group" style="color:#e11d48;margin-right:8px;"></i>คลังสื่อการสอนและเกมการศึกษาเชิงรุก (9 ระบบ)</h2>
                     <p>เลือกสื่อการสอนที่ต้องการเปิดใช้งานบนจอโปรเจกเตอร์ ข้อมูลรายชื่อนักเรียนและข้อมูลโรงเรียนจะเชื่อมโยงถึงกันอัตโนมัติ</p>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -794,7 +801,7 @@
             renderAppsTab(container);
             Swal.fire({
                 icon: 'success',
-                title: 'ซิงค์ข้อมูลเข้าทั้ง 7 สื่อเรียบร้อย',
+                title: 'ซิงค์ข้อมูลเข้าทั้ง 9 สื่อเรียบร้อย',
                 text: 'ข้อมูลโรงเรียนและรายชื่อนักเรียนทุกห้องถูกอัปเดตไปยังสื่อการสอนทุกตัวแล้ว',
                 timer: 2000,
                 showConfirmButton: false,
@@ -821,7 +828,7 @@
         container.innerHTML = `
             <div class="sby-panel">
                 <div class="sby-panel-head">
-                    <h3><i class="fas fa-school" style="color:#0d257c;"></i>ข้อมูลโรงเรียนและครูผู้สอนส่วนกลาง (ใช้ในหัวรายงานราชการ .docx ทั้ง 7 ระบบ)</h3>
+                    <h3><i class="fas fa-school" style="color:#0d257c;"></i>ข้อมูลโรงเรียนและครูผู้สอนส่วนกลาง (ใช้ในหัวรายงานราชการ .docx ทั้ง 9 ระบบ)</h3>
                     <button type="button" class="sby-btn sby-btn-primary" id="btn-save-school">
                         <i class="fas fa-floppy-disk"></i><span>บันทึกและซิงค์ข้อมูลโรงเรียน</span>
                     </button>
@@ -993,7 +1000,7 @@
             Swal.fire({
                 icon: 'success',
                 title: 'บันทึกและซิงค์เรียบร้อย',
-                text: 'ข้อมูลโรงเรียนและรายชื่อนักเรียนถูกซิงค์ไปยังสื่อทั้ง 7 ระบบแล้ว',
+                text: 'ข้อมูลโรงเรียนและรายชื่อนักเรียนถูกซิงค์ไปยังสื่อทั้ง 9 ระบบแล้ว',
                 timer: 1800,
                 showConfirmButton: false,
             });
@@ -1469,7 +1476,7 @@
         Swal.fire({
             icon: 'success',
             title: 'ดึงรายชื่อนักเรียนกลางสำเร็จ',
-            html: `เพิ่มห้องใหม่ <b>${summary.addedClasses}</b> ห้อง • อัปเดตห้องเดิม <b>${summary.updatedClasses}</b> ห้อง<br><small style="color:#64748b;">รวมรายชื่อนักเรียน ${summary.totalStudents} คน และซิงค์ไปยังสื่อทั้ง 7 ระบบแล้ว</small>`,
+            html: `เพิ่มห้องใหม่ <b>${summary.addedClasses}</b> ห้อง • อัปเดตห้องเดิม <b>${summary.updatedClasses}</b> ห้อง<br><small style="color:#64748b;">รวมรายชื่อนักเรียน ${summary.totalStudents} คน และซิงค์ไปยังสื่อทั้ง 9 ระบบแล้ว</small>`,
             timer: 2600,
             showConfirmButton: false,
         });
@@ -1858,16 +1865,16 @@
     }
 
     /* =====================================================================
-       TAB 3: ซิงค์ & สำรองข้อมูลรวมทั้ง 7 ระบบ (Unified Cloud & Backup)
+       TAB 3: ซิงค์ & สำรองข้อมูลรวมทั้ง 9 ระบบ (Unified Cloud & Backup)
        ===================================================================== */
     function renderBackupTab(container) {
         container.innerHTML = `
             <div class="sby-panel">
                 <div class="sby-panel-head">
-                    <h3><i class="fas fa-cloud-arrow-up" style="color:#0284c7;"></i>ศูนย์สำรองและกู้คืนข้อมูลรวมทั้ง 7 ระบบ (Unified Full Backup)</h3>
+                    <h3><i class="fas fa-cloud-arrow-up" style="color:#0284c7;"></i>ศูนย์สำรองและกู้คืนข้อมูลรวมทั้ง 9 ระบบ (Unified Full Backup)</h3>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;">
                         <button type="button" class="sby-btn sby-btn-primary" id="btn-export-full-bundle">
-                            <i class="fas fa-download"></i><span>ดาวน์โหลดข้อมูลทั้งหมด 8 ระบบ (.json)</span>
+                            <i class="fas fa-download"></i><span>ดาวน์โหลดข้อมูลทั้งหมด 9 ระบบ (.json)</span>
                         </button>
                         <label class="sby-btn sby-btn-outline" style="margin:0;cursor:pointer;">
                             <i class="fas fa-folder-open"></i><span>กู้คืนข้อมูลจากไฟล์สำรองรวม (.json)</span>
@@ -1876,7 +1883,7 @@
                     </div>
                 </div>
                 <p style="color:#475569;font-size:14px;margin-top:0;">
-                    นอกจากการบันทึกอัตโนมัติขึ้นฐานข้อมูลออนไลน์ (Cloudflare D1) แล้ว คุณครูยังสามารถดาวน์โหลดข้อมูลของสื่อทั้ง 7 ระบบรวมกันเป็นไฟล์ <code>.json</code> ไฟล์เดียว เพื่อเก็บสำรองไว้ในแฟลชไดรฟ์หรือ Google Drive ได้ตลอดเวลา
+                    นอกจากการบันทึกอัตโนมัติขึ้นฐานข้อมูลออนไลน์ (Cloudflare D1) แล้ว คุณครูยังสามารถดาวน์โหลดข้อมูลของสื่อทั้ง 9 ระบบรวมกันเป็นไฟล์ <code>.json</code> ไฟล์เดียว เพื่อเก็บสำรองไว้ในแฟลชไดรฟ์หรือ Google Drive ได้ตลอดเวลา
                 </p>
 
                 <div class="sby-table-wrap">
@@ -1951,7 +1958,7 @@
                     }
                     await pushCloudRoster();
                     renderBackupTab(container);
-                    Swal.fire({ icon: 'success', title: 'กู้คืนข้อมูลทั้ง 7 ระบบสำเร็จ', timer: 1800, showConfirmButton: false });
+                    Swal.fire({ icon: 'success', title: 'กู้คืนข้อมูลทั้ง 9 ระบบสำเร็จ', timer: 1800, showConfirmButton: false });
                 } catch (err) {
                     Swal.fire({ icon: 'error', title: 'ไฟล์ข้อมูลไม่ถูกต้อง' });
                 }
@@ -2155,7 +2162,7 @@
                     <span style="color:#64748b;font-size:13.5px;"><i class="fas fa-spinner fa-spin"></i> กำลังเตรียมปุ่ม Sign in with Google...</span>
                 </div>
                 <p style="margin:12px 0 0;font-size:12.5px;color:#64748b;">
-                    ข้อมูลรายชื่อนักเรียน ชุดคำถาม และผลการทำกิจกรรมทั้ง 7 ระบบ จะถูกบันทึกและซิงค์เข้าบัญชีคุณครูอัตโนมัติบน Cloudflare D1
+                    ข้อมูลรายชื่อนักเรียน ชุดคำถาม และผลการทำกิจกรรมทั้ง 9 ระบบ จะถูกบันทึกและซิงค์เข้าบัญชีคุณครูอัตโนมัติบน Cloudflare D1
                 </p>
             </div>
         `;
