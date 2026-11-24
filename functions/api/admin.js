@@ -71,7 +71,7 @@ export async function onRequestPost(context) {
 
     const defaultSchool = JSON.stringify({
         name: 'โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน',
-        agency: 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาลำพูน ลำปาง',
+        agency: 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาลำปาง ลำพูน',
         director: '',
         academicYear: String(new Date().getFullYear() + 543),
         semester: '1',

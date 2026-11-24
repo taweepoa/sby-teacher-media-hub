@@ -35,7 +35,7 @@ function loadDb() {
                 allow_external: 0,
                 school_profile_json: JSON.stringify({
                     name: 'โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน',
-                    agency: 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาลำพูน ลำปาง',
+                    agency: 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาลำปาง ลำพูน',
                     director: '',
                     academicYear: '2569',
                     semester: '1',

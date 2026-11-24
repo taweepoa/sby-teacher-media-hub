@@ -13,7 +13,7 @@ import {
 
 const DEFAULT_SCHOOL_PROFILE = {
     name: 'โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน',
-    agency: 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาลำพูน ลำปาง',
+    agency: 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาลำปาง ลำพูน',
     director: '',
     academicYear: String(new Date().getFullYear() + 543),
     semester: '1',

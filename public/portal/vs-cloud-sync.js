@@ -70,7 +70,7 @@
         if (d.school && typeof d.school === 'object') {
             const mapFields = {
                 name: sp.name || 'โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน',
-                agency: sp.agency || 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาลำพูน ลำปาง',
+                agency: sp.agency || 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาลำปาง ลำพูน',
                 academicYear: sp.academicYear || String(new Date().getFullYear() + 543),
                 semester: sp.semester || '1',
                 director: sp.director || '',
