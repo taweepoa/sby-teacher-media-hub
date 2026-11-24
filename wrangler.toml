@@ -7,7 +7,7 @@ SCHOOL_NAME = "โรงเรียนส่วนบุญโญปถัม�
 SCHOOL_DOMAIN = "sby.ac.th"
 STUDENT_EMAIL_REGEX = "^sby_\\d{5}@sby\\.ac\\.th$"
 ADMIN_EMAIL = "taweep@sby.ac.th"
-GOOGLE_CLIENT_ID = ""
+GOOGLE_CLIENT_ID = "473018933968-vseqpb3eh0mj84viutv0dcrnipo3j9qs.apps.googleusercontent.com"
 AUTH_POLICY = "domain_teachers"
 
 [[d1_databases]]

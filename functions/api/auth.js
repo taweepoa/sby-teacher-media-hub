@@ -93,8 +93,8 @@ export async function onRequestPost(context) {
         } catch (err) {
             return jsonResponse({ ok: false, error: err.message }, 401);
         }
-    } else if (body.email) {
-        // โหมดทดสอบ / Workspace Sign-in (เมื่อยังไม่ได้ผูก Production Client ID หรือรันบน Local Dev)
+    } else if (body.email && !env.GOOGLE_CLIENT_ID) {
+        // โหมดทดสอบบน Local Dev เฉพาะกรณีที่ยังไม่ได้ตั้งค่า GOOGLE_CLIENT_ID
         profile = {
             email: String(body.email || '').trim().toLowerCase(),
             name: String(body.name || '').trim() || 'คุณครูโรงเรียนส่วนบุญโญปถัมภ์ ลำพูน',
@@ -102,7 +102,7 @@ export async function onRequestPost(context) {
             sub: 'local_' + String(body.email || '').trim().toLowerCase(),
         };
     } else {
-        return jsonResponse({ ok: false, error: 'กรุณาระบุข้อมูลการเข้าสู่ระบบ' }, 400);
+        return jsonResponse({ ok: false, error: 'กรุณาเข้าสู่ระบบผ่านปุ่ม Sign in with Google ของโรงเรียน' }, 401);
     }
 
     // 1. ตรวจสอบกฎการกรองอีเมลอัตโนมัติ (บล็อก sby_XXXXX@sby.ac.th ทันที)

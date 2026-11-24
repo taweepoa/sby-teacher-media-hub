@@ -158,7 +158,7 @@
         currentTab: 'apps',
         token: localStorage.getItem(TOKEN_KEY) || '',
         user: null,
-        googleClientId: '',
+        googleClientId: '473018933968-vseqpb3eh0mj84viutv0dcrnipo3j9qs.apps.googleusercontent.com',
         roster: loadLocalRoster(),
         teachers: loadLocalTeachers(),
         activeClassId: '',
@@ -279,6 +279,8 @@
                 localStorage.setItem(TOKEN_KEY, state.token);
                 localStorage.setItem(USER_KEY, JSON.stringify(state.user));
                 await fetchCloudRoster();
+                if (state.user.role === 'admin') await fetchAdminTeachers();
+                syncRosterToAllLocalApps();
                 renderHeaderUser();
                 renderMain();
                 Swal.fire({
@@ -477,11 +479,42 @@
     /* =====================================================================
        Render Top Header User Info
        ===================================================================== */
+    function mountGoogleButton(targetEl, attempt = 0) {
+        if (!targetEl) return;
+        if (window.google && google.accounts && google.accounts.id && state.googleClientId) {
+            targetEl.innerHTML = '';
+            google.accounts.id.initialize({
+                client_id: state.googleClientId,
+                callback: (resp) => {
+                    if (Swal.isVisible()) Swal.close();
+                    performLogin({ credential: resp.credential });
+                },
+            });
+            google.accounts.id.renderButton(targetEl, {
+                theme: 'filled_blue',
+                size: 'large',
+                shape: 'pill',
+                text: 'signin_with',
+                width: 300,
+                locale: 'th',
+            });
+            return;
+        }
+        if (attempt < 25) {
+            setTimeout(() => mountGoogleButton(targetEl, attempt + 1), 250);
+        } else {
+            targetEl.innerHTML = '<div style="color:#be123c;font-size:13px;">ไม่สามารถโหลดปุ่ม Google Sign-In ได้ กรุณารีเฟรชหน้าเว็บหรือตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</div>';
+        }
+    }
+
     function renderHeaderUser() {
         const box = document.getElementById('nav-user-box');
+        const navTabs = document.getElementById('portal-nav-tabs');
+        const adminBtn = document.getElementById('tab-btn-admin');
         if (!box) return;
 
-        if (!state.user) {
+        if (!state.user || !state.token) {
+            if (navTabs) navTabs.style.display = 'none';
             box.innerHTML = `
                 <button type="button" class="sby-btn sby-btn-primary sby-btn-sm" id="header-login-btn">
                     <i class="fab fa-google"></i><span>เข้าสู่ระบบครู (@sby.ac.th)</span>
@@ -490,6 +523,9 @@
             document.getElementById('header-login-btn').onclick = () => showLoginModal();
             return;
         }
+
+        if (navTabs) navTabs.style.display = 'flex';
+        if (adminBtn) adminBtn.style.display = state.user.role === 'admin' ? 'inline-flex' : 'none';
 
         const u = state.user;
         const initials = (u.name || u.email || 'ครู').slice(0, 2);
@@ -521,65 +557,17 @@
                             <li>รองรับอีเมล <b>@gmail.com</b> เฉพาะรายบุคคลที่ผู้ดูแลระบบ (Admin) อนุมัติไว้แล้ว</li>
                         </ul>
                     </div>
-                    <div id="g-signin-btn-wrap" style="display:flex;justify-content:center;margin:14px 0;"></div>
-                    <div style="margin-bottom:12px;">
-                        <label style="font-weight:700;display:block;margin-bottom:4px;">อีเมล Google ของคุณครู (@sby.ac.th หรือ @gmail.com ที่อนุมัติ)</label>
-                        <input type="email" id="login-email-input" class="swal2-input" style="margin:0;width:100%;height:42px;font-size:15px;" placeholder="เช่น taweep@sby.ac.th" value="taweep@sby.ac.th">
-                    </div>
-                    <div style="margin-bottom:8px;">
-                        <label style="font-weight:700;display:block;margin-bottom:4px;">ชื่อ-นามสกุลครูผู้สอน (แสดงในรายงานราชการ .docx)</label>
-                        <input type="text" id="login-name-input" class="swal2-input" style="margin:0;width:100%;height:42px;font-size:15px;" placeholder="เช่น ครูทวีป นวคุณานนท์" value="ครูทวีป นวคุณานนท์">
-                    </div>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
-                        <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" id="test-fill-admin">ทดสอบบัญชีครูทวีป (Admin)</button>
-                        <button type="button" class="sby-btn sby-btn-outline sby-btn-sm" id="test-fill-student" style="color:#be123c;border-color:#fecdd3;">ทดสอบระบบบล็อกอีเมลนักเรียน (sby_26201)</button>
+                    <div id="g-signin-modal-wrap" style="display:flex;justify-content:center;margin:20px 0 10px;min-height:44px;">
+                        <span style="color:#64748b;font-size:13px;"><i class="fas fa-spinner fa-spin"></i> กำลังโหลดปุ่ม Sign in with Google...</span>
                     </div>
                 </div>
             `,
+            showConfirmButton: false,
             showCancelButton: true,
-            confirmButtonText: '<i class="fab fa-google"></i> เข้าสู่ระบบด้วยบัญชีโรงเรียน',
-            cancelButtonText: 'ยกเลิก',
-            confirmButtonColor: '#0d257c',
+            cancelButtonText: 'ปิดหน้าต่าง',
             didOpen: () => {
-                const emailIn = document.getElementById('login-email-input');
-                const nameIn = document.getElementById('login-name-input');
-                document.getElementById('test-fill-admin').onclick = () => {
-                    emailIn.value = 'taweep@sby.ac.th';
-                    nameIn.value = 'ครูทวีป นวคุณานนท์';
-                };
-                document.getElementById('test-fill-student').onclick = () => {
-                    emailIn.value = 'sby_26201@sby.ac.th';
-                    nameIn.value = 'นักเรียน ทดสอบ';
-                };
-                if (state.googleClientId && window.google && google.accounts && google.accounts.id) {
-                    google.accounts.id.initialize({
-                        client_id: state.googleClientId,
-                        callback: (resp) => {
-                            Swal.close();
-                            performLogin({ credential: resp.credential });
-                        },
-                    });
-                    google.accounts.id.renderButton(document.getElementById('g-signin-btn-wrap'), {
-                        theme: 'filled_blue',
-                        size: 'large',
-                        shape: 'pill',
-                        text: 'signin_with',
-                    });
-                }
+                mountGoogleButton(document.getElementById('g-signin-modal-wrap'));
             },
-            preConfirm: () => {
-                const email = document.getElementById('login-email-input').value.trim();
-                const name = document.getElementById('login-name-input').value.trim();
-                if (!email) {
-                    Swal.showValidationMessage('กรุณากรอกอีเมลของคุณครู');
-                    return false;
-                }
-                return { email, name };
-            },
-        }).then((res) => {
-            if (res.isConfirmed && res.value) {
-                performLogin(res.value);
-            }
         });
     }
 
@@ -1334,45 +1322,103 @@
         renderMain();
     }
 
+    function renderLoginGate(container) {
+        container.innerHTML = `
+            <div class="sby-login-gate">
+                <img src="assets/img/school-logo.png" alt="ตราโรงเรียนส่วนบุญโญปถัมภ์ ลำพูน">
+                <h2 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#07164a;">เข้าสู่ระบบศูนย์รวมสื่อการสอนสำหรับครูมืออาชีพ</h2>
+                <p style="margin:0;font-size:14px;color:#475569;">โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน • พัฒนาระบบโดย ครูทวีป นวคุณานนท์</p>
+
+                <div class="sby-policy-box">
+                    <b style="color:#07164a;"><i class="fas fa-shield-halved"></i> สิทธิ์การเข้าใช้งานระบบ:</b>
+                    <ul>
+                        <li>เฉพาะคุณครูที่เข้าสู่ระบบด้วยบัญชี Google ของโรงเรียน <b>@sby.ac.th</b></li>
+                        <li>ระบบกรองและ<b>ไม่อนุญาต</b>อีเมลนักเรียน (<code>sby_รหัส 5 หลัก@sby.ac.th</code>) โดยอัตโนมัติ</li>
+                        <li>รองรับอีเมล <b>@gmail.com</b> เฉพาะรายบุคคลที่ผู้ดูแลระบบอนุมัติไว้แล้ว</li>
+                    </ul>
+                </div>
+
+                <div id="g-signin-gate-wrap" style="display:flex;justify-content:center;margin:22px 0 12px;min-height:46px;">
+                    <span style="color:#64748b;font-size:13.5px;"><i class="fas fa-spinner fa-spin"></i> กำลังเตรียมปุ่ม Sign in with Google...</span>
+                </div>
+                <p style="margin:12px 0 0;font-size:12.5px;color:#64748b;">
+                    ข้อมูลรายชื่อนักเรียน ชุดคำถาม และผลการทำกิจกรรมทั้ง 7 ระบบ จะถูกบันทึกและซิงค์เข้าบัญชีคุณครูอัตโนมัติบน Cloudflare D1
+                </p>
+            </div>
+        `;
+        mountGoogleButton(document.getElementById('g-signin-gate-wrap'));
+    }
+
+    async function fetchAdminTeachers() {
+        if (!state.token || !state.user || state.user.role !== 'admin') return;
+        try {
+            const res = await fetch('/api/admin', {
+                headers: { 'Authorization': `Bearer ${state.token}` },
+            });
+            if (res.ok) {
+                const json = await res.json();
+                if (json.ok && Array.isArray(json.teachers)) {
+                    saveLocalTeachers(json.teachers);
+                }
+            }
+        } catch (e) { /* keep local cache */ }
+    }
+
     function renderMain() {
         const container = document.getElementById('portal-main-view');
         if (!container) return;
         updateHeroStats();
 
+        if (!state.user || !state.token) {
+            renderLoginGate(container);
+            return;
+        }
+
         if (state.currentTab === 'roster') renderRosterTab(container);
         else if (state.currentTab === 'backup') renderBackupTab(container);
-        else if (state.currentTab === 'admin') renderAdminTab(container);
-        else renderAppsTab(container);
+        else if (state.currentTab === 'admin') {
+            if (state.user.role !== 'admin') {
+                state.currentTab = 'apps';
+                renderAppsTab(container);
+                return;
+            }
+            renderAdminTab(container);
+        } else renderAppsTab(container);
     }
 
     async function init() {
-        // ตั้งค่าเริ่มต้นให้ครูทวีปพร้อมใช้งานทันทีหากยังไม่เคยเปิดมาก่อน
-        if (!state.user) {
-            state.user = {
-                email: 'taweep@sby.ac.th',
-                name: 'ครูทวีป นวคุณานนท์',
-                position: 'ครูชำนาญการพิเศษ',
-                department: 'โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน',
-                role: 'admin',
-            };
-            localStorage.setItem(USER_KEY, JSON.stringify(state.user));
-        }
-
-        syncRosterToAllLocalApps();
-        renderHeaderUser();
-        renderMain();
-
         document.querySelectorAll('#portal-nav-tabs .sby-tab-btn').forEach((btn) => {
-            btn.onclick = () => switchTab(btn.getAttribute('data-tab'));
+            btn.onclick = async () => {
+                const tab = btn.getAttribute('data-tab');
+                if (tab === 'admin') await fetchAdminTeachers();
+                switchTab(tab);
+            };
         });
 
+        // ตรวจสอบ Session จริงกับ Cloudflare Pages Functions (/api/auth)
         try {
-            const res = await fetch('/api/auth');
+            const headers = state.token ? { 'Authorization': `Bearer ${state.token}` } : {};
+            const res = await fetch('/api/auth', { headers });
             if (res.ok) {
                 const json = await res.json();
                 if (json.googleClientId) state.googleClientId = json.googleClientId;
+                if (json.authenticated && json.teacher) {
+                    state.user = json.teacher;
+                    localStorage.setItem(USER_KEY, JSON.stringify(state.user));
+                    await fetchCloudRoster();
+                    if (state.user.role === 'admin') await fetchAdminTeachers();
+                    syncRosterToAllLocalApps();
+                } else {
+                    state.user = null;
+                    state.token = '';
+                    localStorage.removeItem(TOKEN_KEY);
+                    localStorage.removeItem(USER_KEY);
+                }
             }
-        } catch (e) { /* offline or static server */ }
+        } catch (e) { /* offline fallback */ }
+
+        renderHeaderUser();
+        renderMain();
     }
 
     if (document.readyState === 'loading') {
