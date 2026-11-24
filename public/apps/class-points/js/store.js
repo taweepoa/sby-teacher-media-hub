@@ -26,6 +26,22 @@
 
     const str = (v) => (v == null ? '' : String(v));
 
+    function normItem(s, sids) {
+        const x = {
+            id: s.id && !sids.has(s.id) ? String(s.id) : U.uid('s'),
+            classId: s.classId,
+            no: s.no === '' || s.no == null ? '' : U.toInt(s.no, ''),
+            code: str(s.code).trim(),
+            prefix: U.norm(s.prefix),
+            firstName: U.norm(s.firstName),
+            lastName: U.norm(s.lastName),
+            nick: U.norm(s.nick),
+            avatar: U.toInt(s.avatar, 0),
+        };
+        sids.add(x.id);
+        return x;
+    }
+
     function normalize(raw) {
         const base = newData();
         const d = Object.assign(base, raw || {});
@@ -38,11 +54,7 @@
         d.classes = d.classes.filter((c) => c && c.id).map((c) => ({ id: String(c.id), name: U.norm(c.name) || 'ห้องไม่มีชื่อ', groups: Array.isArray(c.groups) ? c.groups.filter((g) => g && g.id).map((g) => ({ id: String(g.id), name: U.norm(g.name), members: Array.isArray(g.members) ? g.members.map(String) : [] })) : [] }));
         const classIds = new Set(d.classes.map((c) => c.id));
         const sids = new Set();
-        d.students = d.students.filter((s) => s && classIds.has(s.classId)).map((s) => {
-            const x = { id: s.id && !sids.has(s.id) ? String(s.id) : U.uid('s'), classId: s.classId, no: s.no === '' || s.no == null ? '' : U.toInt(s.no, ''), prefix: U.norm(s.prefix), firstName: U.norm(s.firstName), lastName: U.norm(s.lastName), nick: U.norm(s.nick), avatar: U.toInt(s.avatar, 0) };
-            sids.add(x.id);
-            return x;
-        });
+        d.students = d.students.filter((s) => s && classIds.has(s.classId)).map((s) => normItem(s, sids));
         // กลุ่ม: สมาชิกต้องเป็นนักเรียนห้องนั้น และอยู่ได้กลุ่มเดียว
         d.classes.forEach((c) => {
             const seen = new Set();

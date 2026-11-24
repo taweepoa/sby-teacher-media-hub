@@ -92,81 +92,176 @@
             }
         }
 
-        const classes = Array.isArray(roster.classes) ? roster.classes : [];
-        if (!classes.length) return changed;
+        if (!Array.isArray(roster.classes)) return changed;
+        const classes = roster.classes;
 
         // 2. ซิงค์รายชื่อนักเรียนเข้าแอป "วงล้อสุ่มรายชื่อนักเรียน" (vs-random-picker)
+        // ซิงค์ครบทุกห้อง + รหัสนักเรียน (code) และลบห้องเรียนที่ไม่มีในฐานข้อมูลกลางออก (คงรายการกำหนดเอง custom ไว้)
         if (appId === 'vs-random-picker' && Array.isArray(d.lists)) {
+            const customLists = d.lists.filter((l) => l && l.kind === 'custom');
+            const prevClassLists = d.lists.filter((l) => l && l.kind !== 'custom');
+            const usedPrevIds = new Set();
+            const syncedClassLists = [];
+
             classes.forEach((cls) => {
-                if (!cls || !cls.name) return;
-                const existing = d.lists.find((l) => l.id === cls.id || l.name === cls.name);
-                const mappedItems = (cls.students || []).map((s, idx) => ({
-                    id: s.id || `s_${cls.id}_${idx + 1}`,
-                    no: s.no != null && s.no !== '' ? Number(s.no) : idx + 1,
-                    code: s.code || '',
-                    prefix: s.prefix || '',
-                    firstName: s.firstName || '',
-                    lastName: s.lastName || '',
-                    nick: s.nick || '',
-                    gender: s.gender || '',
-                    weight: Number(s.weight) || 1,
-                    active: s.active !== false,
-                    kind: 'class',
-                }));
-                if (!existing) {
-                    d.lists.push({
-                        id: cls.id,
-                        kind: 'class',
-                        name: cls.name,
-                        note: cls.note || '',
-                        items: mappedItems,
+                if (!cls || !cls.id || !cls.name) return;
+                const existing = prevClassLists.find((l) => l.id === cls.id)
+                    || prevClassLists.find((l) => !usedPrevIds.has(l.id) && l.name === cls.name);
+                if (existing) usedPrevIds.add(existing.id);
+
+                const prevItemMap = new Map();
+                if (existing && Array.isArray(existing.items)) {
+                    existing.items.forEach((it) => {
+                        if (it && it.id) prevItemMap.set(String(it.id), it);
                     });
-                    if (!d.currentListId) d.currentListId = cls.id;
-                    changed = true;
-                } else if (existing.items.length === 0 && mappedItems.length > 0) {
-                    existing.items = mappedItems;
-                    changed = true;
                 }
+
+                if (existing && existing.id !== cls.id) {
+                    if (d.wheel && d.wheel.removed && d.wheel.removed[existing.id]) {
+                        d.wheel.removed[cls.id] = d.wheel.removed[existing.id];
+                        delete d.wheel.removed[existing.id];
+                    }
+                    if (d.wheel && d.wheel.round && d.wheel.round[existing.id]) {
+                        d.wheel.round[cls.id] = d.wheel.round[existing.id];
+                        delete d.wheel.round[existing.id];
+                    }
+                    if (d.currentListId === existing.id) d.currentListId = cls.id;
+                }
+
+                const mappedItems = (cls.students || []).map((s, idx) => {
+                    const sid = s.id || `s_${cls.id}_${idx + 1}`;
+                    const prev = prevItemMap.get(String(sid));
+                    return {
+                        id: sid,
+                        no: s.no != null && s.no !== '' ? Number(s.no) : idx + 1,
+                        code: s.code != null ? String(s.code).trim() : '',
+                        prefix: s.prefix || '',
+                        firstName: s.firstName || '',
+                        lastName: s.lastName || '',
+                        nick: s.nick || '',
+                        gender: s.gender || '',
+                        weight: prev ? (Number(prev.weight) || 1) : (Number(s.weight) || 1),
+                        active: prev ? (prev.active !== false) : (s.active !== false),
+                        kind: 'class',
+                    };
+                });
+
+                syncedClassLists.push({
+                    id: cls.id,
+                    kind: 'class',
+                    name: cls.name,
+                    note: cls.note || '',
+                    items: mappedItems,
+                });
             });
+
+            const nextLists = [...syncedClassLists, ...customLists];
+            const validListIds = new Set(nextLists.map((l) => l.id));
+
+            if (JSON.stringify(d.lists) !== JSON.stringify(nextLists)) {
+                d.lists = nextLists;
+                changed = true;
+            }
+            if (d.wheel && d.wheel.removed) {
+                Object.keys(d.wheel.removed).forEach((lid) => {
+                    if (!validListIds.has(lid)) {
+                        delete d.wheel.removed[lid];
+                        changed = true;
+                    }
+                });
+            }
+            if (d.wheel && d.wheel.round) {
+                Object.keys(d.wheel.round).forEach((lid) => {
+                    if (!validListIds.has(lid)) {
+                        delete d.wheel.round[lid];
+                        changed = true;
+                    }
+                });
+            }
+            if (!validListIds.has(d.currentListId)) {
+                d.currentListId = d.lists[0] ? d.lists[0].id : '';
+                changed = true;
+            }
         }
 
         // 3. ซิงค์รายชื่อนักเรียนเข้าแอป "กระดานแต้มพฤติกรรมห้องเรียน" (vs-class-points)
+        // ซิงค์ครบทุกห้อง + รหัสนักเรียน (code) และลบห้องเรียนที่ไม่มีในฐานข้อมูลกลางออก
         if (appId === 'vs-class-points' && Array.isArray(d.classes) && Array.isArray(d.students)) {
+            const prevClasses = d.classes;
+            const prevStudentById = new Map();
+            d.students.forEach((s) => {
+                if (s && s.id) prevStudentById.set(String(s.id), s);
+            });
+
+            const usedPrevIds = new Set();
+            const nextClasses = [];
+            const nextStudents = [];
+
             classes.forEach((cls) => {
-                if (!cls || !cls.name) return;
-                let targetCls = d.classes.find((c) => c.id === cls.id || c.name === cls.name);
-                if (!targetCls) {
-                    targetCls = {
-                        id: cls.id,
-                        name: cls.name,
-                        groups: Array.isArray(cls.groups) ? cls.groups : [],
-                    };
-                    d.classes.push(targetCls);
-                    if (d.settings && !d.settings.classId) d.settings.classId = targetCls.id;
+                if (!cls || !cls.id || !cls.name) return;
+                const existingCls = prevClasses.find((c) => c.id === cls.id)
+                    || prevClasses.find((c) => !usedPrevIds.has(c.id) && c.name === cls.name);
+                if (existingCls) usedPrevIds.add(existingCls.id);
+
+                if (existingCls && existingCls.id !== cls.id && d.settings && d.settings.classId === existingCls.id) {
+                    d.settings.classId = cls.id;
                     changed = true;
                 }
-                const existingInClass = d.students.filter((s) => s.classId === targetCls.id);
-                if (existingInClass.length === 0 && Array.isArray(cls.students) && cls.students.length > 0) {
-                    cls.students.forEach((s, idx) => {
-                        d.students.push({
-                            id: s.id || `s_${targetCls.id}_${idx + 1}`,
-                            classId: targetCls.id,
-                            no: s.no != null && s.no !== '' ? Number(s.no) : idx + 1,
-                            prefix: s.prefix || '',
-                            firstName: s.firstName || '',
-                            lastName: s.lastName || '',
-                            nick: s.nick || '',
-                            avatar: Number(s.avatar) || (idx % 12),
-                        });
+
+                const groups = existingCls && Array.isArray(existingCls.groups) && existingCls.groups.length
+                    ? existingCls.groups
+                    : (Array.isArray(cls.groups) ? cls.groups : []);
+
+                nextClasses.push({
+                    id: cls.id,
+                    name: cls.name,
+                    groups,
+                });
+
+                (cls.students || []).forEach((s, idx) => {
+                    const sid = s.id || `s_${cls.id}_${idx + 1}`;
+                    const prevStu = prevStudentById.get(String(sid));
+                    const avatar = prevStu && prevStu.avatar != null
+                        ? Number(prevStu.avatar)
+                        : (s.avatar != null && s.avatar !== '' ? Number(s.avatar) : (idx % 12));
+                    nextStudents.push({
+                        id: sid,
+                        classId: cls.id,
+                        no: s.no != null && s.no !== '' ? Number(s.no) : idx + 1,
+                        code: s.code != null ? String(s.code).trim() : '',
+                        prefix: s.prefix || '',
+                        firstName: s.firstName || '',
+                        lastName: s.lastName || '',
+                        nick: s.nick || '',
+                        avatar,
                     });
-                    changed = true;
+                });
+            });
+
+            const validClassIds = new Set(nextClasses.map((c) => c.id));
+            const validStudentIds = new Set(nextStudents.map((s) => s.id));
+            nextClasses.forEach((c) => {
+                if (Array.isArray(c.groups)) {
+                    c.groups = c.groups.map((g) => Object.assign({}, g, {
+                        members: Array.isArray(g.members) ? g.members.filter((id) => validStudentIds.has(id)) : [],
+                    }));
                 }
             });
+
+            if (JSON.stringify(d.classes) !== JSON.stringify(nextClasses) || JSON.stringify(d.students) !== JSON.stringify(nextStudents)) {
+                d.classes = nextClasses;
+                d.students = nextStudents;
+                changed = true;
+            }
+            if (d.settings && !validClassIds.has(d.settings.classId)) {
+                d.settings.classId = nextClasses[0] ? nextClasses[0].id : '';
+                changed = true;
+            }
         }
 
         // 4. ซิงค์รายชื่อผู้เล่นเข้าแอป "เกมเศรษฐีตอบคำถามหน้าชั้นเรียน" (vs-millionaire-quiz)
         if (appId === 'vs-millionaire-quiz' && Array.isArray(d.players)) {
-            if (d.players.length === 0) {
+            if (d.players.length === 0 && classes.length > 0) {
                 classes.forEach((cls) => {
                     (cls.students || []).forEach((s, idx) => {
                         const fullName = `${s.prefix || ''}${s.firstName || ''}${s.lastName ? ' ' + s.lastName : ''}`.trim();
@@ -392,7 +487,7 @@
                 body: JSON.stringify({
                     appId: currentApp.id,
                     data: Store.data,
-                    syncMasterRoster: true,
+                    syncMasterRoster: false,
                 }),
             });
             if (res.ok) {
@@ -480,8 +575,12 @@
     async function bootSync(currentApp) {
         const { token, user } = getAuth();
         const localRoster = getMasterRosterLocal();
+        const initialLocalUpdated = window.Store && Store.data && Store.data.updatedAt
+            ? new Date(Store.data.updatedAt).getTime() || 0
+            : 0;
+        const initialLocalEmpty = window.Store && typeof Store.isEmpty === 'function' ? Store.isEmpty() : false;
 
-        // 1. หากมี Master Roster ในเครื่อง ให้เติมข้อมูลโรงเรียนและห้องเรียนตั้งต้นทันทีหากแอปยังว่าง
+        // 1. หากมี Master Roster ในเครื่อง ให้ซิงค์ข้อมูลโรงเรียนและห้องเรียนตั้งต้นทันที
         if (localRoster && window.Store && Store.data) {
             isPulling = true;
             try {
@@ -521,35 +620,42 @@
 
             if (appRes.ok) {
                 const aJson = await appRes.json();
+                let shouldPush = false;
                 isPulling = true;
                 try {
                     if (aJson.ok && aJson.data) {
                         const cloudData = aJson.data;
-                        const localUpdated = Store.data && Store.data.updatedAt ? new Date(Store.data.updatedAt).getTime() : 0;
-                        const cloudUpdated = cloudData.updatedAt ? new Date(cloudData.updatedAt).getTime() : 0;
-                        const localEmpty = typeof Store.isEmpty === 'function' ? Store.isEmpty() : false;
+                        const cloudUpdated = cloudData.updatedAt ? new Date(cloudData.updatedAt).getTime() || 0 : 0;
 
-                        if (localEmpty || cloudUpdated >= localUpdated) {
-                            if (roster) applyMasterRosterToApp(currentApp.id, cloudData, roster);
+                        if (initialLocalEmpty || cloudUpdated >= initialLocalUpdated) {
+                            if (roster && applyMasterRosterToApp(currentApp.id, cloudData, roster)) {
+                                shouldPush = true;
+                            }
                             refreshAppView(cloudData);
-                        } else if (roster) {
+                        } else {
+                            shouldPush = true;
+                            if (roster) {
+                                const copy = JSON.parse(JSON.stringify(Store.data));
+                                if (applyMasterRosterToApp(currentApp.id, copy, roster)) {
+                                    refreshAppView(copy);
+                                }
+                            }
+                        }
+                    } else {
+                        shouldPush = true;
+                        if (roster) {
                             const copy = JSON.parse(JSON.stringify(Store.data));
                             if (applyMasterRosterToApp(currentApp.id, copy, roster)) {
                                 refreshAppView(copy);
                             }
-                        }
-                    } else if (roster) {
-                        const copy = JSON.parse(JSON.stringify(Store.data));
-                        if (applyMasterRosterToApp(currentApp.id, copy, roster)) {
-                            refreshAppView(copy);
                         }
                     }
                 } finally {
                     isPulling = false;
                 }
                 setSyncState('synced', 'ซิงค์ออนไลน์พร้อมใช้งาน');
-                // หากบน Cloud ยังไม่มีข้อมูลของแอปนี้ ให้ส่งข้อมูลเริ่มต้นขึ้นไปเก็บ
-                if (!aJson.data) {
+                // หากบน Cloud ยังไม่มีข้อมูลของแอปนี้ หรือ Master Roster มีการปรับรายการห้อง/รหัสนักเรียน ให้ซิงค์ app_states ขึ้น Cloud
+                if (shouldPush) {
                     scheduleCloudPush(currentApp);
                 }
             } else {

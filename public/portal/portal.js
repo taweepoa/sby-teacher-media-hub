@@ -360,11 +360,15 @@
             });
             if (res.ok) {
                 const json = await res.json();
-                if (json.ok && (json.classes?.length || json.schoolProfile?.name)) {
+                if (json.ok && Array.isArray(json.classes)) {
+                    const cloudClasses = json.classes;
                     saveLocalRoster({
                         schoolProfile: Object.assign({}, DEFAULT_ROSTER.schoolProfile, json.schoolProfile || {}),
-                        classes: json.classes && json.classes.length ? json.classes : state.roster.classes,
+                        classes: cloudClasses,
                     });
+                    if (!cloudClasses.some((c) => c.id === state.activeClassId)) {
+                        state.activeClassId = cloudClasses[0]?.id || '';
+                    }
                 }
             }
         } catch (e) { /* use local cache */ }
@@ -393,15 +397,16 @@
 
     /**
      * ซิงค์ข้อมูลโรงเรียนและรายชื่อนักเรียนส่วนกลางเข้าสู่ LocalStorage ของทั้ง 7 แอปทันที
+     * พร้อมลบห้องเรียนที่ถูกลบออกจากแอปย่อย (vs-random-picker และ vs-class-points) และรักษาฟิลด์ code
      */
     function syncRosterToAllLocalApps() {
         const sp = state.roster.schoolProfile || {};
-        const classes = state.roster.classes || [];
+        const classes = Array.isArray(state.roster.classes) ? state.roster.classes : [];
 
         APPS.forEach((app) => {
             try {
                 const raw = localStorage.getItem(app.storageKey);
-                const d = raw ? JSON.parse(raw) : { app: app.id, schemaVersion: 1, updatedAt: new Date().toISOString() };
+                const d = raw ? JSON.parse(raw) : { app: app.id, schemaVersion: 1, updatedAt: '' };
                 d.school = Object.assign({}, d.school || {}, {
                     name: sp.name || 'โรงเรียนส่วนบุญโญปถัมภ์ ลำพูน',
                     agency: sp.agency || 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาลำพูน ลำปาง',
@@ -418,59 +423,152 @@
 
                 if (app.id === 'vs-random-picker') {
                     if (!Array.isArray(d.lists)) d.lists = [];
+                    const customLists = d.lists.filter((l) => l && l.kind === 'custom');
+                    const prevClassLists = d.lists.filter((l) => l && l.kind !== 'custom');
+                    const usedPrevIds = new Set();
+                    const syncedClassLists = [];
+
                     classes.forEach((cls) => {
-                        const items = (cls.students || []).map((s, idx) => ({
-                            id: s.id || `s_${cls.id}_${idx + 1}`,
-                            no: Number(s.no) || idx + 1,
-                            code: s.code || '',
-                            prefix: s.prefix || '',
-                            firstName: s.firstName || '',
-                            lastName: s.lastName || '',
-                            nick: s.nick || '',
-                            gender: s.gender || '',
-                            weight: 1,
-                            active: true,
-                            kind: 'class',
-                        }));
-                        const existing = d.lists.find((l) => l.id === cls.id || l.name === cls.name);
-                        if (existing) {
-                            existing.name = cls.name;
-                            existing.note = cls.note || '';
-                            existing.items = items;
-                        } else {
-                            d.lists.push({ id: cls.id, kind: 'class', name: cls.name, note: cls.note || '', items });
+                        if (!cls || !cls.id) return;
+                        const existing = prevClassLists.find((l) => l.id === cls.id)
+                            || prevClassLists.find((l) => !usedPrevIds.has(l.id) && l.name === cls.name);
+                        if (existing) usedPrevIds.add(existing.id);
+
+                        const prevItemMap = new Map();
+                        if (existing && Array.isArray(existing.items)) {
+                            existing.items.forEach((it) => {
+                                if (it && it.id) prevItemMap.set(String(it.id), it);
+                            });
                         }
-                    });
-                    if (!d.currentListId && d.lists[0]) d.currentListId = d.lists[0].id;
-                } else if (app.id === 'vs-class-points') {
-                    if (!Array.isArray(d.classes)) d.classes = [];
-                    if (!Array.isArray(d.students)) d.students = [];
-                    classes.forEach((cls) => {
-                        let ex = d.classes.find((c) => c.id === cls.id || c.name === cls.name);
-                        if (!ex) {
-                            ex = { id: cls.id, name: cls.name, groups: cls.groups || [] };
-                            d.classes.push(ex);
-                        } else {
-                            ex.name = cls.name;
+
+                        // ย้ายสถานะวงล้อหาก ID ห้องเรียนถูกปรับให้ตรงกับฐานข้อมูลกลาง
+                        if (existing && existing.id !== cls.id) {
+                            if (d.wheel && d.wheel.removed && d.wheel.removed[existing.id]) {
+                                d.wheel.removed[cls.id] = d.wheel.removed[existing.id];
+                                delete d.wheel.removed[existing.id];
+                            }
+                            if (d.wheel && d.wheel.round && d.wheel.round[existing.id]) {
+                                d.wheel.round[cls.id] = d.wheel.round[existing.id];
+                                delete d.wheel.round[existing.id];
+                            }
+                            if (d.currentListId === existing.id) d.currentListId = cls.id;
                         }
-                        // แทนที่รายชื่อนักเรียนในห้องนั้นโดยคงรหัส ID เดิมไว้ให้แต้มไม่หาย
-                        d.students = d.students.filter((s) => s.classId !== ex.id);
-                        (cls.students || []).forEach((s, idx) => {
-                            d.students.push({
-                                id: s.id || `s_${ex.id}_${idx + 1}`,
-                                classId: ex.id,
-                                no: Number(s.no) || idx + 1,
+
+                        const items = (cls.students || []).map((s, idx) => {
+                            const sid = s.id || `s_${cls.id}_${idx + 1}`;
+                            const prev = prevItemMap.get(String(sid));
+                            return {
+                                id: sid,
+                                no: s.no != null && s.no !== '' ? Number(s.no) : idx + 1,
+                                code: s.code != null ? String(s.code).trim() : '',
                                 prefix: s.prefix || '',
                                 firstName: s.firstName || '',
                                 lastName: s.lastName || '',
                                 nick: s.nick || '',
-                                avatar: Number(s.avatar) || (idx % 12),
+                                gender: s.gender || '',
+                                weight: prev ? (Number(prev.weight) || 1) : (Number(s.weight) || 1),
+                                active: prev ? (prev.active !== false) : (s.active !== false),
+                                kind: 'class',
+                            };
+                        });
+
+                        syncedClassLists.push({
+                            id: cls.id,
+                            kind: 'class',
+                            name: cls.name,
+                            note: cls.note || '',
+                            items,
+                        });
+                    });
+
+                    // ลบห้องเรียนที่ไม่มีในฐานข้อมูลกลางออก โดยคงรายการกำหนดเอง (custom) ไว้
+                    d.lists = [...syncedClassLists, ...customLists];
+                    const validListIds = new Set(d.lists.map((l) => l.id));
+                    if (d.wheel && d.wheel.removed) {
+                        Object.keys(d.wheel.removed).forEach((lid) => {
+                            if (!validListIds.has(lid)) delete d.wheel.removed[lid];
+                        });
+                    }
+                    if (d.wheel && d.wheel.round) {
+                        Object.keys(d.wheel.round).forEach((lid) => {
+                            if (!validListIds.has(lid)) delete d.wheel.round[lid];
+                        });
+                    }
+                    if (!validListIds.has(d.currentListId)) {
+                        d.currentListId = d.lists[0] ? d.lists[0].id : '';
+                    }
+                } else if (app.id === 'vs-class-points') {
+                    if (!Array.isArray(d.classes)) d.classes = [];
+                    if (!Array.isArray(d.students)) d.students = [];
+                    const prevClasses = d.classes;
+                    const prevStudentById = new Map();
+                    d.students.forEach((s) => {
+                        if (s && s.id) prevStudentById.set(String(s.id), s);
+                    });
+
+                    const usedPrevIds = new Set();
+                    const nextClasses = [];
+                    const nextStudents = [];
+
+                    classes.forEach((cls) => {
+                        if (!cls || !cls.id) return;
+                        const ex = prevClasses.find((c) => c.id === cls.id)
+                            || prevClasses.find((c) => !usedPrevIds.has(c.id) && c.name === cls.name);
+                        if (ex) usedPrevIds.add(ex.id);
+
+                        if (ex && ex.id !== cls.id && d.settings && d.settings.classId === ex.id) {
+                            d.settings.classId = cls.id;
+                        }
+
+                        const groups = ex && Array.isArray(ex.groups) && ex.groups.length
+                            ? ex.groups
+                            : (Array.isArray(cls.groups) ? cls.groups : []);
+
+                        nextClasses.push({
+                            id: cls.id,
+                            name: cls.name,
+                            groups,
+                        });
+
+                        (cls.students || []).forEach((s, idx) => {
+                            const sid = s.id || `s_${cls.id}_${idx + 1}`;
+                            const prevStu = prevStudentById.get(String(sid));
+                            const avatar = prevStu && prevStu.avatar != null
+                                ? Number(prevStu.avatar)
+                                : (s.avatar != null && s.avatar !== '' ? Number(s.avatar) : (idx % 12));
+                            nextStudents.push({
+                                id: sid,
+                                classId: cls.id,
+                                no: s.no != null && s.no !== '' ? Number(s.no) : idx + 1,
+                                code: s.code != null ? String(s.code).trim() : '',
+                                prefix: s.prefix || '',
+                                firstName: s.firstName || '',
+                                lastName: s.lastName || '',
+                                nick: s.nick || '',
+                                avatar,
                             });
                         });
                     });
+
+                    // ลบห้องเรียนและนักเรียนที่ไม่มีในฐานข้อมูลกลางออก
+                    const validClassIds = new Set(nextClasses.map((c) => c.id));
+                    const validStudentIds = new Set(nextStudents.map((s) => s.id));
+                    nextClasses.forEach((c) => {
+                        if (Array.isArray(c.groups)) {
+                            c.groups = c.groups.map((g) => Object.assign({}, g, {
+                                members: Array.isArray(g.members) ? g.members.filter((id) => validStudentIds.has(id)) : [],
+                            }));
+                        }
+                    });
+                    d.classes = nextClasses;
+                    d.students = nextStudents;
+                    if (!d.settings) d.settings = { classId: '', sound: true };
+                    if (!validClassIds.has(d.settings.classId)) {
+                        d.settings.classId = nextClasses[0] ? nextClasses[0].id : '';
+                    }
                 }
 
-                d.updatedAt = new Date().toISOString();
+                d.updatedAt = raw ? new Date().toISOString() : '';
                 localStorage.setItem(app.storageKey, JSON.stringify(d));
             } catch (e) { /* ignore */ }
         });

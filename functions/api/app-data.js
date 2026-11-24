@@ -1,7 +1,7 @@
 import { ensureD1Schema } from "./_db.js";
 /* =====================================================================
    GET /api/app-data?appId=... — ดึงข้อมูลของสื่อการสอน (หรือดึงทั้งหมด 7 ระบบเมื่อไม่ระบุ appId)
-   PUT /api/app-data           — บันทึกข้อมูลของสื่อการสอนลง Cloudflare D1 พร้อมซิงค์รายชื่อนักเรียนกลางอัตโนมัติ
+   PUT /api/app-data           — บันทึกข้อมูลของสื่อการสอนลง Cloudflare D1 (ไม่เขียนทับ master_classes)
    ===================================================================== */
 import { jsonResponse, requireAuth } from './_utils.js';
 
@@ -87,58 +87,8 @@ export async function onRequestPut(context) {
             updated_at = excluded.updated_at
     `).bind(user.email, appId, JSON.stringify(body.data), now).run();
 
-    // Auto-Harvest: หากครูเพิ่มหรือแก้ไขรายชื่อนักเรียนในแอป "วงล้อสุ่มชื่อ" หรือ "กระดานแต้มพฤติกรรม"
-    // ให้ซิงค์กลับเข้าตาราง master_classes ส่วนกลางด้วย เพื่อให้สื่ออื่นเห็นรายชื่อล่าสุดทันที
-    if (body.syncMasterRoster !== false) {
-        try {
-            if (appId === 'vs-random-picker' && Array.isArray(body.data.lists)) {
-                const classLists = body.data.lists.filter((l) => l && l.kind !== 'custom' && Array.isArray(l.items) && l.items.length > 0);
-                for (const l of classLists) {
-                    await env.DB.prepare(`
-                        INSERT INTO master_classes (id, teacher_email, name, note, students_json, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                        ON CONFLICT(teacher_email, id) DO UPDATE SET
-                            name = excluded.name,
-                            note = excluded.note,
-                            students_json = excluded.students_json,
-                            updated_at = excluded.updated_at
-                    `).bind(
-                        String(l.id),
-                        user.email,
-                        String(l.name),
-                        String(l.note || ''),
-                        JSON.stringify(l.items),
-                        now
-                    ).run();
-                }
-            } else if (appId === 'vs-class-points' && Array.isArray(body.data.classes) && Array.isArray(body.data.students)) {
-                for (const c of body.data.classes) {
-                    if (!c || !c.id) continue;
-                    const cStudents = body.data.students.filter((s) => s && s.classId === c.id);
-                    if (cStudents.length > 0) {
-                        await env.DB.prepare(`
-                            INSERT INTO master_classes (id, teacher_email, name, note, students_json, groups_json, updated_at)
-                            VALUES (?, ?, ?, '', ?, ?, ?)
-                            ON CONFLICT(teacher_email, id) DO UPDATE SET
-                                name = excluded.name,
-                                students_json = excluded.students_json,
-                                groups_json = excluded.groups_json,
-                                updated_at = excluded.updated_at
-                        `).bind(
-                            String(c.id),
-                            user.email,
-                            String(c.name),
-                            JSON.stringify(cStudents),
-                            JSON.stringify(Array.isArray(c.groups) ? c.groups : []),
-                            now
-                        ).run();
-                    }
-                }
-            }
-        } catch (err) {
-            // ไม่ให้กระทบการบันทึกหลักของแอป
-        }
-    }
+    // ปิดระบบ Auto-Harvest: ให้หน้าหลัก (portal.js ผ่าน /api/roster) เป็นแหล่งข้อมูลหลักเพียงแห่งเดียว
+    // (Single Source of Truth) สำหรับตาราง master_classes เพื่อป้องกันห้องที่ลบไปแล้วกลับมาใหม่และป้องกันฟิลด์ code หาย
 
     return jsonResponse({
         ok: true,
